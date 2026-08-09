@@ -17,7 +17,6 @@ public sealed class ContractDocumentTests
             "contracts/build.schema.json",
             "contracts/mission.schema.json",
             "examples/agent-decision.example.json",
-            "examples/cold-start.mission.json",
             "examples/designed-build.json",
             "examples/generic-optimal-build.json",
         };
@@ -35,17 +34,57 @@ public sealed class ContractDocumentTests
     }
 
     [Fact]
+    public void P3MissionTuningChangesOnlyTheFiveProvenUnfairPatrols()
+    {
+        var workpack = RepositoryFiles.ReadObject("docs/workpack/examples/cold-start.mission.json");
+        var implemented = RepositoryFiles.ReadObject("examples/cold-start.mission.json");
+        var tunedVariantIds = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "cs-practice-03",
+            "cs-practice-05",
+            "cs-cert-01",
+            "cs-cert-03",
+            "cs-cert-05",
+        };
+
+        foreach (var variantId in tunedVariantIds)
+        {
+            var sourceVariant = FindVariant(workpack, variantId);
+            var implementedVariant = FindVariant(implemented, variantId);
+            var sourcePatrol = sourceVariant["mutations"]!.AsArray().Single(
+                mutation => mutation!["type"]!.GetValue<string>() == "drone-patrol");
+            var implementedMutations = implementedVariant["mutations"]!.AsArray();
+            var implementedPatrolIndex = implementedMutations
+                .Select((mutation, index) => (mutation, index))
+                .Single(item => item.mutation!["type"]!.GetValue<string>() == "drone-patrol")
+                .index;
+
+            implementedMutations[implementedPatrolIndex] = sourcePatrol!.DeepClone();
+        }
+
+        Assert.Equal("2.0.1", implemented["contentVersion"]!.GetValue<string>());
+        implemented["contentVersion"] = workpack["contentVersion"]!.DeepClone();
+
+        Assert.True(JsonNode.DeepEquals(workpack, implemented));
+    }
+
+    [Fact]
     public void ContractVersionConstantsMatchCanonicalDocuments()
     {
         var mission = RepositoryFiles.ReadObject("examples/cold-start.mission.json");
         var build = RepositoryFiles.ReadObject("examples/designed-build.json");
         var decision = RepositoryFiles.ReadObject("examples/agent-decision.example.json");
+        var certification = RepositoryFiles.ReadObject(
+            "content/missions/cold-start/server/certification-variants.json");
 
         Assert.Equal(ContractVersions.Mission, mission["schemaVersion"]?.GetValue<string>());
         Assert.Equal(ContractVersions.Build, build["schemaVersion"]?.GetValue<string>());
         Assert.Equal(
             ContractVersions.AgentDecision,
             decision["schemaVersion"]?.GetValue<string>());
+        Assert.Equal(
+            ContractVersions.CertificationVariants,
+            certification["schemaVersion"]?.GetValue<string>());
     }
 
     [Fact]
@@ -55,6 +94,15 @@ public sealed class ContractDocumentTests
             "examples/cold-start.mission.json",
             "contracts/mission.schema.json",
             ContractDocumentLoader.LoadMission);
+    }
+
+    [Fact]
+    public void CertificationFixtureRoundTripsWithoutSemanticLoss()
+    {
+        AssertSemanticRoundTrip(
+            "content/missions/cold-start/server/certification-variants.json",
+            "contracts/certification-variants.schema.json",
+            ContractDocumentLoader.LoadCertificationVariants);
     }
 
     [Theory]
@@ -178,4 +226,9 @@ public sealed class ContractDocumentTests
 
         Assert.True(JsonNode.DeepEquals(original, roundTripped));
     }
+
+    private static JsonObject FindVariant(JsonObject mission, string variantId) =>
+        mission["variants"]!.AsArray()
+            .Select(variant => variant!.AsObject())
+            .Single(variant => variant["variantId"]!.GetValue<string>() == variantId);
 }

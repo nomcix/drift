@@ -149,17 +149,24 @@ public sealed class ProjectBoundaryTests
     }
 
     [Fact]
-    public void ContentCliReferencesOnlyContent()
+    public void ContentToolsReferenceOnlyContent()
     {
-        var projectPath = Path.Combine(
-            FindRepositoryRoot(),
-            "tools",
-            "DirectiveDrift.ContentCli",
-            "DirectiveDrift.ContentCli.csproj");
+        foreach (var toolName in new[]
+                 {
+                     "DirectiveDrift.ContentCli",
+                     "DirectiveDrift.EvaluationCli",
+                 })
+        {
+            var projectPath = Path.Combine(
+                FindRepositoryRoot(),
+                "tools",
+                toolName,
+                $"{toolName}.csproj");
 
-        Assert.Equal(
-            ["DirectiveDrift.Content"],
-            ReadProjectReferences(projectPath));
+            Assert.Equal(
+                ["DirectiveDrift.Content"],
+                ReadProjectReferences(projectPath));
+        }
     }
 
     private static string[] ReadProjectReferences(string projectPath)

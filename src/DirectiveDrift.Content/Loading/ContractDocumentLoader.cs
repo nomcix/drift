@@ -17,6 +17,11 @@ public static class ContractDocumentLoader
         string schemaJson)
         => Load<AgentDecisionDocument>(json, schemaJson);
 
+    public static DocumentLoadResult<CertificationFixtureDocument> LoadCertificationVariants(
+        string json,
+        string schemaJson)
+        => Load<CertificationFixtureDocument>(json, schemaJson);
+
     private static DocumentLoadResult<T> Load<T>(string json, string schemaJson)
         where T : class
     {

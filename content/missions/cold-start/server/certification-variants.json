@@ -1,0 +1,159 @@
+{
+  "schemaVersion": "1",
+  "missionId": "cold-start",
+  "certificationVersion": "cold-start-cert-2",
+  "variants": [
+    {
+      "variantId": "cs-cert-01",
+      "label": "Certification Vector 01",
+      "visibility": "certification",
+      "mutations": [
+        {
+          "type": "hazard-connection",
+          "targetId": "west-junction"
+        },
+        {
+          "type": "drone-patrol",
+          "roomIds": [
+            "security-hub",
+            "junction",
+            "console-alpha",
+            "junction"
+          ],
+          "startIndex": 0
+        }
+      ]
+    },
+    {
+      "variantId": "cs-cert-02",
+      "label": "Certification Vector 02",
+      "visibility": "certification",
+      "mutations": [
+        {
+          "type": "hazard-connection",
+          "targetId": "service-junction"
+        },
+        {
+          "type": "damaged-device",
+          "targetId": "console-beta"
+        },
+        {
+          "type": "drone-patrol",
+          "roomIds": [
+            "security-hub",
+            "junction",
+            "west-hall",
+            "junction"
+          ],
+          "startIndex": 0
+        }
+      ]
+    },
+    {
+      "variantId": "cs-cert-03",
+      "label": "Certification Vector 03",
+      "visibility": "certification",
+      "mutations": [
+        {
+          "type": "hazard-connection",
+          "targetId": "west-junction"
+        },
+        {
+          "type": "locked-connection",
+          "targetId": "landing-west"
+        },
+        {
+          "type": "drone-patrol",
+          "roomIds": [
+            "security-hub",
+            "junction",
+            "console-alpha",
+            "junction",
+            "west-hall",
+            "junction",
+            "console-beta",
+            "junction"
+          ],
+          "startIndex": 0
+        }
+      ]
+    },
+    {
+      "variantId": "cs-cert-04",
+      "label": "Certification Vector 04",
+      "visibility": "certification",
+      "mutations": [
+        {
+          "type": "hazard-connection",
+          "targetId": "service-junction"
+        },
+        {
+          "type": "damaged-device",
+          "targetId": "console-alpha"
+        },
+        {
+          "type": "drone-patrol",
+          "roomIds": [
+            "security-hub",
+            "junction",
+            "console-beta",
+            "junction",
+            "west-hall",
+            "junction"
+          ],
+          "startIndex": 2
+        }
+      ]
+    },
+    {
+      "variantId": "cs-cert-05",
+      "label": "Certification Vector 05",
+      "visibility": "certification",
+      "mutations": [
+        {
+          "type": "hazard-connection",
+          "targetId": "west-junction"
+        },
+        {
+          "type": "damaged-device",
+          "targetId": "console-beta"
+        },
+        {
+          "type": "drone-patrol",
+          "roomIds": [
+            "security-hub",
+            "junction",
+            "west-hall",
+            "junction",
+            "console-alpha",
+            "junction"
+          ],
+          "startIndex": 0
+        }
+      ]
+    },
+    {
+      "variantId": "cs-cert-06",
+      "label": "Certification Vector 06",
+      "visibility": "certification",
+      "mutations": [
+        {
+          "type": "hazard-connection",
+          "targetId": "service-junction"
+        },
+        {
+          "type": "drone-patrol",
+          "roomIds": [
+            "security-hub",
+            "junction",
+            "west-hall",
+            "junction",
+            "console-alpha",
+            "junction"
+          ],
+          "startIndex": 5
+        }
+      ]
+    }
+  ]
+}
