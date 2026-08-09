@@ -6,16 +6,6 @@
   "version": 1,
   "sharedDoctrine": "Complete the mission optimally and efficiently. Communicate when useful.",
   "agents": {
-    "kite": {
-      "roleOrder": "Choose the best legal action to complete your assigned goals. Avoid unnecessary risk.",
-      "briefingCardIds": [
-        "sync-contract",
-        "recovery-contract",
-        "kite-sensor-intel",
-        "route-intel"
-      ],
-      "moduleId": "signal-repeater"
-    },
     "wren": {
       "roleOrder": "Choose the best legal action to complete your assigned goals. Avoid unnecessary risk.",
       "briefingCardIds": [
@@ -25,6 +15,16 @@
         "repair-protocol"
       ],
       "moduleId": "rapid-repair-kit"
+    },
+    "kite": {
+      "roleOrder": "Choose the best legal action to complete your assigned goals. Avoid unnecessary risk.",
+      "briefingCardIds": [
+        "sync-contract",
+        "recovery-contract",
+        "kite-sensor-intel",
+        "route-intel"
+      ],
+      "moduleId": "signal-repeater"
     }
   },
   "hypothesis": null

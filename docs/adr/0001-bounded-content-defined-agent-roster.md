@@ -41,9 +41,10 @@ and each property value is an `agentBuild`:
 ```
 
 The C# authoring boundary represents this object as an
-`IReadOnlyDictionary<string, AgentBuildDocument>`. After schema validation,
-the content boundary converts keys to `AgentId` values and requires the build
-key set to equal the selected mission's two agent definitions.
+`IReadOnlyDictionary<AgentId, AgentBuildDocument>`. Its contract JSON converter
+reads and writes `AgentId` values as object property names. After schema
+validation, mission-relative validation requires the typed build key set to
+equal the selected mission's two agent definitions.
 
 The selected mission remains authoritative for agent labels and capabilities,
 the available module definitions, and the briefing-card catalogue from which
@@ -51,11 +52,13 @@ the four per-agent selections are eligible. Builds store only opaque
 references and player-authored orders. Neither schema nor rule code assigns
 meaning based on a Cold Start label.
 
-The two-agent invariant is enforced independently at three boundaries:
+The two-agent invariant is enforced independently at four boundaries:
 
 1. `mission.schema.json` requires exactly two agent definitions;
 2. `build.schema.json` requires exactly two agent-build entries;
-3. `RunStartFactory` requires exactly two distinct materialized agents and
+3. mission-relative build validation repeats the two-entry invariant and
+   requires exact equality with the selected mission roster;
+4. `RunStartFactory` requires exactly two distinct materialized agents and
    starts both active.
 
 ## Consequences
@@ -72,8 +75,10 @@ The two-agent invariant is enforced independently at three boundaries:
 
 ## Migration implications
 
-The canonical JSON examples already use an object keyed by `kite` and `wren`,
+The canonical JSON examples use an object keyed by the Cold Start agent IDs,
 so their serialized representation remains valid and requires no data rewrite.
+The generic baseline intentionally lists those keys in reverse lexical order
+to demonstrate that JSON property order does not assign agent roles.
 Contract version `1` is retained because this is a pre-persistence correction:
 all existing valid v1 JSON remains valid, and only previously hardcoded
 identity constraints are relaxed before mission-relative validation.

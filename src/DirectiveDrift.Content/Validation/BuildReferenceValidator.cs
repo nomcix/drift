@@ -19,9 +19,16 @@ public static class BuildReferenceValidator
                     $"Mission ID '{build.MissionId}' does not match the loaded mission."));
         }
 
-        var buildAgentIds = build.Agents.Keys
-            .Select(agentId => new AgentId(agentId))
-            .ToHashSet();
+        if (build.Agents.Count != 2)
+        {
+            errors.Add(
+                new ValidationError(
+                    ValidationErrorCodes.ContentInvariantFailed,
+                    "/agents",
+                    "Build contract version 1 requires exactly two active autonomous agents."));
+        }
+
+        var buildAgentIds = build.Agents.Keys.ToHashSet();
         var missionAgentIds = mission.Agents.Keys.ToHashSet();
 
         foreach (var agentId in buildAgentIds
@@ -47,10 +54,10 @@ public static class BuildReferenceValidator
         }
 
         foreach (var (agentId, agentBuild) in build.Agents.OrderBy(
-                     entry => entry.Key,
+                     entry => entry.Key.Value,
                      StringComparer.Ordinal))
         {
-            ValidateAgentBuild(agentBuild, $"/agents/{agentId}", mission, errors);
+            ValidateAgentBuild(agentBuild, $"/agents/{agentId.Value}", mission, errors);
         }
 
         return new ValidationReport(

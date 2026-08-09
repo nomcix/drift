@@ -12,4 +12,7 @@ public static class ValidationErrorCodes
     public const string ContentUnresolvedReference = "content.unresolved-reference";
     public const string ContentInvalidReference = "content.invalid-reference";
     public const string ContentRawPresentationMarkup = "content.raw-presentation-markup";
+    public const string ContentInvalidMutation = "content.invalid-mutation";
+    public const string ContentInvariantFailed = "content.invariant-failed";
+    public const string ContentUnsolvedVariant = "content.unsolved-variant";
 }

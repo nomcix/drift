@@ -149,17 +149,52 @@ public sealed class ProjectBoundaryTests
     }
 
     [Fact]
-    public void ContentCliReferencesOnlyContent()
+    public void ContentToolsReferenceOnlyContent()
     {
-        var projectPath = Path.Combine(
-            FindRepositoryRoot(),
-            "tools",
-            "DirectiveDrift.ContentCli",
-            "DirectiveDrift.ContentCli.csproj");
+        foreach (var toolName in new[]
+                 {
+                     "DirectiveDrift.ContentCli",
+                     "DirectiveDrift.EvaluationCli",
+                 })
+        {
+            var projectPath = Path.Combine(
+                FindRepositoryRoot(),
+                "tools",
+                toolName,
+                $"{toolName}.csproj");
 
-        Assert.Equal(
-            ["DirectiveDrift.Content"],
-            ReadProjectReferences(projectPath));
+            Assert.Equal(
+                ["DirectiveDrift.Content"],
+                ReadProjectReferences(projectPath));
+        }
+    }
+
+    [Fact]
+    public void ProductionSourceDoesNotBranchOnColdStartAgentIds()
+    {
+        var sourceDirectory = Path.Combine(FindRepositoryRoot(), "src");
+        var forbiddenIdentityLiterals = new[]
+        {
+            "\"kite\"",
+            "\"wren\"",
+            "\"Kite\"",
+            "\"Wren\"",
+        };
+        var violations = Directory
+            .EnumerateFiles(sourceDirectory, "*.cs", SearchOption.AllDirectories)
+            .Where(path => !path.Split(Path.DirectorySeparatorChar).Contains("obj", StringComparer.Ordinal))
+            .SelectMany(path =>
+            {
+                var source = File.ReadAllText(path);
+
+                return forbiddenIdentityLiterals
+                    .Where(source.Contains)
+                    .Select(identity =>
+                        $"{Path.GetRelativePath(sourceDirectory, path)} contains {identity}.");
+            })
+            .ToArray();
+
+        Assert.Empty(violations);
     }
 
     private static string[] ReadProjectReferences(string projectPath)

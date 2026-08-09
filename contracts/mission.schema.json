@@ -78,7 +78,7 @@
     },
     "briefingCards": {
       "type": "array",
-      "description": "The mission-authored briefing catalogue eligible for build allocation.",
+      "description": "The mission-authored briefing catalogue eligible for build allocation; the build contract stores only selected opaque card IDs.",
       "minItems": 10,
       "maxItems": 10,
       "items": {

@@ -41,7 +41,7 @@
     },
     "agents": {
       "type": "object",
-      "description": "Exactly two build entries keyed by agent IDs from the selected mission.",
+      "description": "Build contract v1 contains exactly two active autonomous-agent entries. Property names are opaque agent IDs whose complete key set is cross-validated against the selected mission.",
       "minProperties": 2,
       "maxProperties": 2,
       "propertyNames": {
@@ -69,6 +69,7 @@
     },
     "agentBuild": {
       "type": "object",
+      "description": "Player-authored configuration for one mission-defined agent. Labels, capabilities, briefing-card eligibility, and module definitions remain mission content.",
       "additionalProperties": false,
       "required": [
         "roleOrder",

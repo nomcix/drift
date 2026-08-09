@@ -1,5 +1,6 @@
 using DirectiveDrift.Content.Contracts;
 using DirectiveDrift.Content.Loading;
+using DirectiveDrift.Content.Materialization;
 using DirectiveDrift.Content.Validation;
 
 return await RunAsync(args);
@@ -47,8 +48,49 @@ static async Task<int> RunAsync(string[] arguments)
             return 1;
         }
 
-        Console.WriteLine(
-            $"Valid mission '{result.Mission!.MissionId}' ({result.Mission.Authoring.ContentVersion}).");
+        var mission = result.Mission!;
+        if (string.Equals(mission.MissionId.Value, "cold-start", StringComparison.Ordinal))
+        {
+            var certificationPath = FindRepositoryFile(
+                Path.Combine(
+                    "content",
+                    "missions",
+                    "cold-start",
+                    "server",
+                    "certification-variants.json"));
+            var certificationSchemaPath = FindRepositoryFile(
+                Path.Combine("contracts", ContractSchemaFiles.CertificationVariants));
+            if (certificationPath is null || certificationSchemaPath is null)
+            {
+                Console.Error.WriteLine(
+                    "content.file-read-failed / Certification fixture or schema could not be located.");
+                return 2;
+            }
+
+            var catalogResult = ColdStartVariantCatalogLoader.Load(
+                mission,
+                await File.ReadAllTextAsync(certificationPath, cancellation.Token),
+                await File.ReadAllTextAsync(certificationSchemaPath, cancellation.Token));
+            if (!catalogResult.IsValid)
+            {
+                WriteErrors(catalogResult.Errors);
+                return 1;
+            }
+
+            var validation = ColdStartContentValidator.Validate(mission, catalogResult.Catalog!);
+            if (!validation.IsValid)
+            {
+                WriteErrors(validation.Errors);
+                return 1;
+            }
+
+            Console.WriteLine(
+                $"Valid mission '{mission.MissionId}' ({mission.Authoring.ContentVersion}); "
+                + $"{validation.Proofs.Length} variants proven.");
+            return 0;
+        }
+
+        Console.WriteLine($"Valid mission '{mission.MissionId}' ({mission.Authoring.ContentVersion}).");
         return 0;
     }
     catch (OperationCanceledException)
@@ -59,6 +101,14 @@ static async Task<int> RunAsync(string[] arguments)
     finally
     {
         Console.CancelKeyPress -= cancelHandler;
+    }
+}
+
+static void WriteErrors(IEnumerable<ValidationError> errors)
+{
+    foreach (var error in errors)
+    {
+        Console.Error.WriteLine($"{error.Code} {error.Path} {error.Message}");
     }
 }
 

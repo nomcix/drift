@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1",
   "missionId": "cold-start",
-  "contentVersion": "2.0.0",
+  "contentVersion": "2.0.1",
   "rulesVersion": "dd-rules-1",
   "scoreVersion": "cold-start-score-2",
   "title": "Cold Start",
@@ -809,12 +809,14 @@
         {
           "type": "drone-patrol",
           "roomIds": [
+            "console-alpha",
+            "junction",
             "security-hub",
             "junction",
-            "console-alpha",
+            "west-hall",
             "junction"
           ],
-          "startIndex": 2
+          "startIndex": 0
         }
       ]
     },
@@ -863,6 +865,8 @@
             "junction",
             "console-alpha",
             "junction",
+            "west-hall",
+            "junction",
             "console-beta",
             "junction"
           ],
@@ -884,12 +888,10 @@
           "roomIds": [
             "security-hub",
             "junction",
-            "console-beta",
-            "junction",
             "console-alpha",
             "junction"
           ],
-          "startIndex": 1
+          "startIndex": 0
         }
       ]
     },
@@ -937,9 +939,13 @@
             "security-hub",
             "junction",
             "console-alpha",
+            "junction",
+            "west-hall",
+            "junction",
+            "console-beta",
             "junction"
           ],
-          "startIndex": 3
+          "startIndex": 0
         }
       ]
     },
@@ -988,12 +994,12 @@
           "roomIds": [
             "security-hub",
             "junction",
-            "console-alpha",
+            "west-hall",
             "junction",
-            "console-beta",
+            "console-alpha",
             "junction"
           ],
-          "startIndex": 4
+          "startIndex": 0
         }
       ]
     },

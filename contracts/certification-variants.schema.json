@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://directive-drift.example/contracts/certification-variants.schema.json",
+  "title": "Directive Drift Server-held Certification Variants",
+  "description": "A server-only set of prevalidated certification mutations.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "missionId",
+    "certificationVersion",
+    "variants"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1"
+    },
+    "missionId": {
+      "$ref": "#/$defs/id"
+    },
+    "certificationVersion": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "variants": {
+      "type": "array",
+      "minItems": 6,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/variant"
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[^\\u0000-\\u001F\\u007F]*$"
+    },
+    "variant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "variantId",
+        "label",
+        "visibility",
+        "mutations"
+      ],
+      "properties": {
+        "variantId": {
+          "$ref": "#/$defs/id"
+        },
+        "label": {
+          "$ref": "#/$defs/label"
+        },
+        "visibility": {
+          "const": "certification"
+        },
+        "mutations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/mutation"
+          }
+        }
+      }
+    },
+    "mutation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "targetId"],
+          "properties": {
+            "type": { "const": "hazard-connection" },
+            "targetId": { "$ref": "#/$defs/id" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "targetId"],
+          "properties": {
+            "type": { "const": "damaged-device" },
+            "targetId": { "$ref": "#/$defs/id" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "targetId"],
+          "properties": {
+            "type": { "const": "locked-connection" },
+            "targetId": { "$ref": "#/$defs/id" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "roomIds", "startIndex"],
+          "properties": {
+            "type": { "const": "drone-patrol" },
+            "roomIds": {
+              "type": "array",
+              "minItems": 2,
+              "items": { "$ref": "#/$defs/id" }
+            },
+            "startIndex": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      ]
+    }
+  }
+}

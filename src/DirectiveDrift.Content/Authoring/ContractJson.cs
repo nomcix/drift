@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using DirectiveDrift.Core.Model;
 
 namespace DirectiveDrift.Content.Authoring;
 
@@ -33,7 +34,35 @@ public static class ContractJson
 
         options.Converters.Add(
             new JsonStringEnumConverter(JsonNamingPolicy.KebabCaseLower, allowIntegerValues: false));
+        options.Converters.Add(new AgentIdJsonConverter());
 
         return options;
+    }
+
+    private sealed class AgentIdJsonConverter : JsonConverter<AgentId>
+    {
+        public override AgentId Read(
+            ref Utf8JsonReader reader,
+            Type typeToConvert,
+            JsonSerializerOptions options) =>
+            new(reader.GetString() ?? throw new JsonException("Agent ID cannot be null."));
+
+        public override void Write(
+            Utf8JsonWriter writer,
+            AgentId value,
+            JsonSerializerOptions options) =>
+            writer.WriteStringValue(value.Value);
+
+        public override AgentId ReadAsPropertyName(
+            ref Utf8JsonReader reader,
+            Type typeToConvert,
+            JsonSerializerOptions options) =>
+            new(reader.GetString() ?? throw new JsonException("Agent ID cannot be null."));
+
+        public override void WriteAsPropertyName(
+            Utf8JsonWriter writer,
+            AgentId value,
+            JsonSerializerOptions options) =>
+            writer.WritePropertyName(value.Value);
     }
 }
