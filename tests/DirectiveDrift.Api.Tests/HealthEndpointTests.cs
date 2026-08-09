@@ -1,10 +1,9 @@
 using System.Net;
-using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace DirectiveDrift.Api.Tests;
 
-public sealed class HealthEndpointTests(WebApplicationFactory<Program> application)
-    : IClassFixture<WebApplicationFactory<Program>>
+public sealed class HealthEndpointTests(P4ApiFactory application)
+    : IClassFixture<P4ApiFactory>
 {
     [Theory]
     [InlineData("/health/live")]

@@ -5,4 +5,35 @@
     <ProjectReference Include="../DirectiveDrift.Content/DirectiveDrift.Content.csproj" />
     <ProjectReference Include="../DirectiveDrift.Persistence/DirectiveDrift.Persistence.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.OpenApi" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="../../content/missions/cold-start/mission.json">
+      <Link>content/missions/cold-start/mission.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="../../content/missions/cold-start/server/certification-variants.json">
+      <Link>content/missions/cold-start/server/certification-variants.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="../../contracts/build.schema.json">
+      <Link>contracts/build.schema.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="../../contracts/certification-variants.schema.json">
+      <Link>contracts/certification-variants.schema.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="../../contracts/mission.schema.json">
+      <Link>contracts/mission.schema.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
 </Project>

@@ -1,0 +1,5 @@
+[*.cs]
+generated_code = true
+
+# EF emits inline composite-key column arrays in generated migrations.
+dotnet_diagnostic.CA1861.severity = none

@@ -1,0 +1,445 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "DirectiveDrift.Api | v1",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:5078/"
+    }
+  ],
+  "paths": {
+    "/api/v1/runtime": {
+      "get": {
+        "tags": [
+          "DirectiveDrift.Api"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuntimeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/missions": {
+      "get": {
+        "tags": [
+          "DirectiveDrift.Api"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AnonymousTypeOfstringAndstringAndstring"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/missions/{missionId}": {
+      "get": {
+        "tags": [
+          "DirectiveDrift.Api"
+        ],
+        "parameters": [
+          {
+            "name": "missionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/missions/{missionId}/practice-variants": {
+      "get": {
+        "tags": [
+          "DirectiveDrift.Api"
+        ],
+        "parameters": [
+          {
+            "name": "missionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/builds": {
+      "post": {
+        "tags": [
+          "ApiEndpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "DirectiveDrift.Api"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/builds/{buildId}": {
+      "get": {
+        "tags": [
+          "ApiEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "buildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/builds/{buildId}/versions": {
+      "post": {
+        "tags": [
+          "ApiEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "buildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "DirectiveDrift.Api"
+        ],
+        "parameters": [
+          {
+            "name": "buildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/runs": {
+      "post": {
+        "tags": [
+          "ApiEndpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{runId}": {
+      "get": {
+        "tags": [
+          "DirectiveDrift.Api"
+        ],
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{runId}/turns": {
+      "post": {
+        "tags": [
+          "ApiEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/operations/{operationId}": {
+      "get": {
+        "tags": [
+          "DirectiveDrift.Api"
+        ],
+        "parameters": [
+          {
+            "name": "operationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{runId}/events": {
+      "get": {
+        "tags": [
+          "ApiEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "afterSequence",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int64"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{runId}/replay": {
+      "get": {
+        "tags": [
+          "DirectiveDrift.Api"
+        ],
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AnonymousTypeOfstringAndstringAndstring": {
+        "required": [
+          "missionId",
+          "title",
+          "contentVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "missionId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contentVersion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "JsonElement": { },
+      "RuntimeResponse": {
+        "required": [
+          "apiVersion",
+          "providerMode",
+          "stateSchemaVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "apiVersion": {
+            "type": "string"
+          },
+          "providerMode": {
+            "type": "string"
+          },
+          "stateSchemaVersion": {
+            "type": "string"
+          }
+        }
+      },
+      "StartRunRequest": {
+        "required": [
+          "buildId",
+          "buildVersion",
+          "variantId"
+        ],
+        "type": "object",
+        "properties": {
+          "buildId": {
+            "type": "string"
+          },
+          "buildVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "variantId": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "DirectiveDrift.Api"
+    },
+    {
+      "name": "ApiEndpoints"
+    }
+  ]
+}

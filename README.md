@@ -2,11 +2,10 @@
 
 Directive Drift is a browser-first strategy game about designing the command
 system for two autonomous, information-constrained agents. This repository is
-currently at Packet P3: the reproducible application skeleton, strict
-authored-content boundary, pure deterministic simulator, Cold Start
-materializer, reference solver, and scripted evaluation harness are present.
-Application persistence and the HTTP run spine remain intentionally deferred
-to Packet P4.
+currently at Packet P4: the strict authored-content boundary, deterministic
+simulator, Cold Start solver, application ports, durable SQLite turn queue,
+scripted worker, replay API, and generated TypeScript API client are present.
+The briefing workbench and styled browser client remain deferred to Packet P5.
 
 ## Prerequisites
 
@@ -32,10 +31,18 @@ Run the API locally with:
 dotnet run --project src/DirectiveDrift.Api
 ```
 
-The process exposes liveness at `/health/live` and readiness at
-`/health/ready`. Run the production-shaped container locally with
+The process exposes liveness at `/health/live`, readiness at `/health/ready`,
+the versioned API under `/api/v1`, and OpenAPI at `/openapi/v1.json`. Local
+development applies the initial SQLite migration automatically and uses the
+credential-free scripted provider. Run the production-shaped container with
 `docker compose up --build`; its persistent SQLite data directory is backed by
 the `directive-drift-data` named volume.
+
+Regenerate the checked-in OpenAPI contract and TypeScript fetch client with:
+
+```sh
+./scripts/generate-api-client.sh
+```
 
 Validate the canonical mission with:
 
@@ -70,7 +77,7 @@ Core <--- Content -------------------+
   +----- Application <--- AI -------+---> Api
                     <--- Persistence+
 
-Api-generated HTTP contracts ----------------> Web (future packet)
+Api-generated HTTP contracts ----------------> Web
 ```
 
 `DirectiveDrift.Core` is deterministic and BCL-only. Architecture tests check
@@ -81,7 +88,7 @@ simultaneous turn resolution, canonical events, terminal scoring, PCG32 state,
 and versioned SHA-256 state hashes. It consumes only materialized opaque IDs;
 mission JSON mapping remains a Content concern.
 
-Current packet evidence and the P3 content-fairness corrections are recorded
+Current packet evidence and the earlier P3 content-fairness corrections are recorded
 in [`docs/build-status.md`](docs/build-status.md).
 
 The complete build specification is preserved under [`docs/workpack`](docs/workpack/README.md).

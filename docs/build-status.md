@@ -9,7 +9,72 @@ Last updated: 2026-08-09
 | P2 — Deterministic core simulator | Complete | Core rules, PCG32, observation, determinism, replay, terminal, and architecture tests pass. |
 | P3 — Cold Start materializer, solver, and evaluation harness | Complete | Eleven fixed variants have ≤17-turn interchangeable-loadout and no-damage proofs; three named policy families and scripted onboarding fail/success gates pass. |
 | P3.5 — Bounded roster extensibility | Complete | Build JSON and C# use an opaque `AgentId`-keyed two-entry map; mission-relative validation requires the exact authored roster without identity-name branching. |
-| P4+ | Not started | Application persistence, HTTP run advancement, live providers, and player certification UX remain deferred. |
+| P4 — Application, persistence, and API spine | Complete | A scripted run completes through durable HTTP turn operations; SQLite migration/WAL, ownership, idempotency, lease recovery, atomic commits, pagination, replay, OpenAPI, and generated TypeScript client gates pass. |
+| P5+ | Not started | Briefing workbench, SVG presentation, live providers, and player certification UX remain deferred. |
+
+## P4 implementation status
+
+P4 adds application ports for storage, decision providers, and usage
+reservation, with a turn processor that claims a leased operation, obtains both
+scripted decisions concurrently, resolves exactly once through Core, and asks
+persistence to commit the snapshot, decisions, canonical events, usage
+settlement, run status, and operation status in one transaction.
+
+EF Core SQLite supplies the initial schema and WAL-backed queue. Idempotency
+keys are unique per run so a retry after a fast commit returns the original
+operation instead of advancing another turn. A partial unique index allows at
+most one queued or processing operation per run. Expired integer-timestamp
+leases can be reclaimed by a fresh repository/worker instance without making
+a duplicate provider call for the scripted mode.
+
+Guest IDs are random opaque server-mapped cookies; unknown presented IDs are
+replaced rather than adopted. Mutations use a SameSite double-submit CSRF
+token, and all build, run, event, operation, and replay reads apply ownership
+filters. Certification variants remain server-held and cannot be selected by
+the P4 start-run endpoint.
+
+The replay response contains the immutable build version, initial canonical
+snapshot, ordered canonical events, resolved decisions, and terminal run
+summary. It performs no provider calls. OpenAPI is served by the API and the
+checked-in TypeScript fetch client is regenerated and drift-checked in CI.
+
+### P4 schema and migration impact
+
+- No authored JSON Schema version changed; build contract version `1` retains
+  the accepted opaque `AgentId`-keyed two-agent roster.
+- The API/OpenAPI surface is new and has no earlier client compatibility
+  obligation. Generated client files are never hand-edited.
+- Migration `InitialCreate` establishes the P4 database. P0–P3 had no
+  persisted database, so there is no earlier data fixture to transform or
+  incompatible run to preserve.
+- Scripted usage reservations and settlements are zero-cost ledger entries.
+  Live token, price, daily, and concurrency budget enforcement remains later
+  provider scope.
+
+### P4 acceptance evidence
+
+Run on 2026-08-09:
+
+- `dotnet build --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet test --no-build --no-restore` — 119 passed, 0 failed, 0 skipped.
+- P4 persistence suite — 6 passed against real temporary SQLite files.
+- P4 API suite — 4 passed, including a complete scripted HTTP run.
+- `./scripts/generate-api-client.sh` — generated OpenAPI and TypeScript client.
+- `npm run lint --prefix src/DirectiveDrift.Web` — passed with 0 warnings.
+- `npm run test --prefix src/DirectiveDrift.Web` — 1 passed.
+- `npm run build --prefix src/DirectiveDrift.Web` — passed.
+- `npm audit --prefix src/DirectiveDrift.Web --audit-level=moderate` — 0 vulnerabilities.
+- `docker build -t directive-drift:p4 .` — passed; image
+  `sha256:f7a585daba4b46e408ab92cec647bbafce1ca58801067281f400f1456da542ca`.
+- Container `/health/ready` returned `Healthy`; `/api/v1/runtime` returned the
+  scripted `v1` runtime and `dd-state-1` state schema.
+
+### P4 deliberate omissions
+
+- No live or fake provider SDK, certification workflow, emergency burst,
+  abort, comparison, styled client, or P5 work was added.
+- Hosted deployments do not migrate automatically unless the explicit startup
+  migration setting is enabled; local Development and integration tests do.
 
 ## P3.5 implementation status
 

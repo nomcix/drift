@@ -4,7 +4,12 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["dist", "eslint.config.js"],
+    ignores: [
+      "dist",
+      "eslint.config.js",
+      "scripts/mark-generated-api.mjs",
+      "src/api/generated",
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.strictTypeChecked,

@@ -9,8 +9,8 @@ namespace DirectiveDrift.Content.Solving;
 
 public static class ReferenceSolver
 {
-    private const ulong SolverSeed = 0x434f4c442d535441UL;
-    private const ulong SolverStream = 0x5245462d534f4c56UL;
+    public const ulong ScriptedSeed = 0x434f4c442d535441UL;
+    public const ulong ScriptedStream = 0x5245462d534f4c56UL;
 
     public static ReferenceSolution Solve(
         RunDefinition definition,
@@ -23,8 +23,8 @@ public static class ReferenceSolver
         var start = RunStartFactory.Create(
             new RunId($"reference-{definition.Mission.VariantId.Value}"),
             definition,
-            SolverSeed,
-            SolverStream);
+            ScriptedSeed,
+            ScriptedStream);
         var seen = new HashSet<string>(StringComparer.Ordinal) { CreateStateKey(start.State) };
         long enqueueOrder = 0;
         var root = new SearchNode(start.State, null, null);
@@ -102,8 +102,8 @@ public static class ReferenceSolver
         var start = RunStartFactory.Create(
             new RunId($"reference-{definition.Mission.VariantId.Value}"),
             definition,
-            SolverSeed,
-            SolverStream);
+            ScriptedSeed,
+            ScriptedStream);
         var state = start.State;
         var events = ImmutableArray.CreateBuilder<CanonicalEvent>();
         events.Add(start.Event);
