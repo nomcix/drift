@@ -112,8 +112,8 @@ export function StationMap({ presentation, state, lens, readable }: StationMapPr
             onKeyDown={(event) => { handleRoomKey(event, room.roomId); }}
           >
             <TrustedRoomShape room={room} powered={state.powerOnline} open={room.roomId === "archive-threshold" && state.archiveOpen} />
-            <text className="room-label" y={room.size.h / 2 + 18}>{known ? room.shortLabel : "UNKNOWN"}</text>
-            <text className="room-id" y={room.size.h / 2 + 32}>{known ? room.roomId : "NO SIGNAL"}</text>
+            <text className="room-label" y={room.size.h / 2 + 20}>{known ? room.shortLabel : "UNKNOWN"}</text>
+            <text className="room-id" y={room.size.h / 2 + 39}>{known ? room.roomId : "NO SIGNAL"}</text>
           </g>;
         })}
       </g>

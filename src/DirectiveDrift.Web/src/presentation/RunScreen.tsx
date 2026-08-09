@@ -66,5 +66,5 @@ export function RunScreen({ onReturn }: { readonly onReturn: () => void }) {
 }
 
 function AgentRail({ agentId, health, room }: { readonly agentId: "kite" | "wren"; readonly health: number; readonly room: string }) {
-  return <section className={`rail-agent rail-${agentId}`}><header><span>{agentId === "kite" ? "K" : "W"}</span><div><h3>{agentId}</h3><p>{agentId === "kite" ? "Recon / courier" : "Engineer / anchor"}</p></div></header><dl><div><dt>Location</dt><dd>{room}</dd></div><div><dt>Health</dt><dd>{String(health)} / 3</dd></div></dl></section>;
+  return <section className={`rail-agent rail-${agentId}`}><header><span>{agentId === "kite" ? "K" : "W"}</span><div><h3>{agentId}</h3><p>{agentId === "kite" ? "Recon / courier" : "Engineer / anchor"}</p></div></header><dl><div><dt>Location</dt><dd>{room.replaceAll("-", " ")}</dd></div><div><dt>Health</dt><dd>{String(health)} / 3</dd></div></dl></section>;
 }
