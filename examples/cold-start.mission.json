@@ -1,0 +1,1040 @@
+{
+  "schemaVersion": "1",
+  "missionId": "cold-start",
+  "contentVersion": "2.0.0",
+  "rulesVersion": "dd-rules-1",
+  "scoreVersion": "cold-start-score-2",
+  "title": "Cold Start",
+  "playerBriefing": "A solar surge has stranded research station Orison on emergency power. Kite and Wren have eighteen turns before the archive bulkhead seals. Restore auxiliary power, activate both archive consoles together, recover the flight recorder, and extract both units through Landing Bay. A security drone patrols the station, and radiation has contaminated at least one service link.",
+  "rules": {
+    "turnLimit": 18,
+    "baseMessageBudget": 6,
+    "briefingSlotsPerAgent": 4,
+    "messageDelayTurns": 1,
+    "maxMessageLength": 120,
+    "sharedDoctrineMaxLength": 240,
+    "roleOrderMaxLength": 160,
+    "baseMemoryMaxLength": 240
+  },
+  "agents": [
+    {
+      "agentId": "kite",
+      "label": "Kite",
+      "health": 2,
+      "startRoomId": "landing-bay",
+      "capabilities": [
+        "move",
+        "scan",
+        "sense-adjacent-radiation",
+        "use-crawlspace",
+        "carry-mission-item"
+      ]
+    },
+    {
+      "agentId": "wren",
+      "label": "Wren",
+      "health": 2,
+      "startRoomId": "maintenance-alcove",
+      "capabilities": [
+        "move",
+        "diagnose-machinery",
+        "repair-major-system",
+        "repair-console",
+        "carry-mission-item"
+      ]
+    }
+  ],
+  "rooms": [
+    {
+      "roomId": "landing-bay",
+      "label": "Landing Bay",
+      "tags": [
+        "extraction",
+        "safe"
+      ],
+      "visual": {
+        "shape": "docking-crescent",
+        "anchor": {
+          "x": 145,
+          "y": 430
+        },
+        "size": {
+          "w": 145,
+          "h": 132
+        },
+        "rotation": 0,
+        "labelPlacement": "inside"
+      }
+    },
+    {
+      "roomId": "west-hall",
+      "label": "West Transit",
+      "tags": [
+        "transit"
+      ],
+      "visual": {
+        "shape": "tapered-transit",
+        "anchor": {
+          "x": 390,
+          "y": 390
+        },
+        "size": {
+          "w": 120,
+          "h": 74
+        },
+        "rotation": -4,
+        "labelPlacement": "inside"
+      }
+    },
+    {
+      "roomId": "maintenance-alcove",
+      "label": "Maintenance",
+      "tags": [
+        "safe",
+        "start",
+        "service"
+      ],
+      "visual": {
+        "shape": "service-hex",
+        "anchor": {
+          "x": 325,
+          "y": 660
+        },
+        "size": {
+          "w": 102,
+          "h": 96
+        },
+        "rotation": 0,
+        "labelPlacement": "inside"
+      }
+    },
+    {
+      "roomId": "east-hall",
+      "label": "Service Spine",
+      "tags": [
+        "transit",
+        "service"
+      ],
+      "visual": {
+        "shape": "angled-spine",
+        "anchor": {
+          "x": 520,
+          "y": 610
+        },
+        "size": {
+          "w": 124,
+          "h": 82
+        },
+        "rotation": -8,
+        "labelPlacement": "inside"
+      }
+    },
+    {
+      "roomId": "junction",
+      "label": "Relay Nexus",
+      "tags": [
+        "transit",
+        "power-bus"
+      ],
+      "visual": {
+        "shape": "relay-ring",
+        "anchor": {
+          "x": 720,
+          "y": 430
+        },
+        "size": {
+          "w": 110,
+          "h": 110
+        },
+        "rotation": 0,
+        "labelPlacement": "inside"
+      }
+    },
+    {
+      "roomId": "security-hub",
+      "label": "Security Array",
+      "tags": [
+        "security",
+        "threat"
+      ],
+      "visual": {
+        "shape": "radar-octagon",
+        "anchor": {
+          "x": 710,
+          "y": 170
+        },
+        "size": {
+          "w": 100,
+          "h": 100
+        },
+        "rotation": 0,
+        "labelPlacement": "below"
+      }
+    },
+    {
+      "roomId": "auxiliary-power",
+      "label": "Auxiliary Reactor",
+      "tags": [
+        "machinery",
+        "objective"
+      ],
+      "visual": {
+        "shape": "reactor-ring",
+        "anchor": {
+          "x": 720,
+          "y": 720
+        },
+        "size": {
+          "w": 148,
+          "h": 112
+        },
+        "rotation": 0,
+        "labelPlacement": "below"
+      }
+    },
+    {
+      "roomId": "console-alpha",
+      "label": "Console Alpha",
+      "tags": [
+        "objective",
+        "console"
+      ],
+      "visual": {
+        "shape": "console-wedge-up",
+        "anchor": {
+          "x": 1020,
+          "y": 300
+        },
+        "size": {
+          "w": 124,
+          "h": 78
+        },
+        "rotation": 0,
+        "labelPlacement": "inside"
+      }
+    },
+    {
+      "roomId": "console-beta",
+      "label": "Console Beta",
+      "tags": [
+        "objective",
+        "console"
+      ],
+      "visual": {
+        "shape": "console-wedge-down",
+        "anchor": {
+          "x": 1020,
+          "y": 560
+        },
+        "size": {
+          "w": 124,
+          "h": 78
+        },
+        "rotation": 0,
+        "labelPlacement": "inside"
+      }
+    },
+    {
+      "roomId": "archive-threshold",
+      "label": "Archive Gate",
+      "tags": [
+        "locked",
+        "objective"
+      ],
+      "visual": {
+        "shape": "archive-iris",
+        "anchor": {
+          "x": 1210,
+          "y": 430
+        },
+        "size": {
+          "w": 78,
+          "h": 118
+        },
+        "rotation": 0,
+        "labelPlacement": "below"
+      }
+    },
+    {
+      "roomId": "archive",
+      "label": "Flight Archive",
+      "tags": [
+        "objective",
+        "cargo"
+      ],
+      "visual": {
+        "shape": "archive-shield",
+        "anchor": {
+          "x": 1415,
+          "y": 430
+        },
+        "size": {
+          "w": 142,
+          "h": 122
+        },
+        "rotation": 0,
+        "labelPlacement": "below"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "connectionId": "landing-west",
+      "fromRoomId": "landing-bay",
+      "toRoomId": "west-hall",
+      "bidirectional": true,
+      "initialState": "open",
+      "hazardEligible": false,
+      "visualWaypoints": [
+        {
+          "x": 250,
+          "y": 425
+        },
+        {
+          "x": 330,
+          "y": 405
+        }
+      ]
+    },
+    {
+      "connectionId": "landing-maintenance",
+      "fromRoomId": "landing-bay",
+      "toRoomId": "maintenance-alcove",
+      "bidirectional": true,
+      "initialState": "open",
+      "hazardEligible": false,
+      "visualWaypoints": [
+        {
+          "x": 220,
+          "y": 510
+        },
+        {
+          "x": 270,
+          "y": 605
+        }
+      ]
+    },
+    {
+      "connectionId": "west-junction",
+      "fromRoomId": "west-hall",
+      "toRoomId": "junction",
+      "bidirectional": true,
+      "initialState": "open",
+      "hazardEligible": true,
+      "visualWaypoints": [
+        {
+          "x": 500,
+          "y": 400
+        },
+        {
+          "x": 620,
+          "y": 420
+        }
+      ]
+    },
+    {
+      "connectionId": "maintenance-service",
+      "fromRoomId": "maintenance-alcove",
+      "toRoomId": "east-hall",
+      "bidirectional": true,
+      "initialState": "open",
+      "hazardEligible": false,
+      "visualWaypoints": [
+        {
+          "x": 405,
+          "y": 680
+        },
+        {
+          "x": 465,
+          "y": 650
+        }
+      ]
+    },
+    {
+      "connectionId": "service-junction",
+      "fromRoomId": "east-hall",
+      "toRoomId": "junction",
+      "bidirectional": true,
+      "initialState": "open",
+      "hazardEligible": true,
+      "visualWaypoints": [
+        {
+          "x": 610,
+          "y": 580
+        },
+        {
+          "x": 675,
+          "y": 500
+        }
+      ]
+    },
+    {
+      "connectionId": "junction-security",
+      "fromRoomId": "junction",
+      "toRoomId": "security-hub",
+      "bidirectional": true,
+      "initialState": "open",
+      "hazardEligible": false,
+      "visualWaypoints": [
+        {
+          "x": 720,
+          "y": 340
+        },
+        {
+          "x": 710,
+          "y": 245
+        }
+      ]
+    },
+    {
+      "connectionId": "junction-power",
+      "fromRoomId": "junction",
+      "toRoomId": "auxiliary-power",
+      "bidirectional": true,
+      "initialState": "open",
+      "hazardEligible": false,
+      "visualWaypoints": [
+        {
+          "x": 720,
+          "y": 520
+        },
+        {
+          "x": 720,
+          "y": 640
+        }
+      ]
+    },
+    {
+      "connectionId": "junction-alpha",
+      "fromRoomId": "junction",
+      "toRoomId": "console-alpha",
+      "bidirectional": true,
+      "initialState": "open",
+      "hazardEligible": false,
+      "visualWaypoints": [
+        {
+          "x": 820,
+          "y": 395
+        },
+        {
+          "x": 930,
+          "y": 330
+        }
+      ]
+    },
+    {
+      "connectionId": "junction-beta",
+      "fromRoomId": "junction",
+      "toRoomId": "console-beta",
+      "bidirectional": true,
+      "initialState": "open",
+      "hazardEligible": false,
+      "visualWaypoints": [
+        {
+          "x": 820,
+          "y": 465
+        },
+        {
+          "x": 930,
+          "y": 540
+        }
+      ]
+    },
+    {
+      "connectionId": "junction-gate",
+      "fromRoomId": "junction",
+      "toRoomId": "archive-threshold",
+      "bidirectional": true,
+      "initialState": "open",
+      "hazardEligible": false,
+      "visualWaypoints": [
+        {
+          "x": 900,
+          "y": 430
+        },
+        {
+          "x": 1090,
+          "y": 430
+        }
+      ]
+    },
+    {
+      "connectionId": "gate-archive",
+      "fromRoomId": "archive-threshold",
+      "toRoomId": "archive",
+      "bidirectional": true,
+      "initialState": "locked",
+      "hazardEligible": false,
+      "visualWaypoints": [
+        {
+          "x": 1270,
+          "y": 430
+        },
+        {
+          "x": 1340,
+          "y": 430
+        }
+      ]
+    },
+    {
+      "connectionId": "service-security-crawl",
+      "fromRoomId": "east-hall",
+      "toRoomId": "security-hub",
+      "bidirectional": true,
+      "initialState": "open",
+      "allowedAgentIds": [
+        "kite"
+      ],
+      "hazardEligible": false,
+      "visualWaypoints": [
+        {
+          "x": 580,
+          "y": 500
+        },
+        {
+          "x": 610,
+          "y": 330
+        }
+      ]
+    }
+  ],
+  "briefingCards": [
+    {
+      "cardId": "power-contract",
+      "title": "Auxiliary Power",
+      "text": "The archive systems need the Auxiliary Reactor online. Wren can repair its major generator; normal repair takes two consecutive interactions.",
+      "tags": [
+        "required",
+        "objective",
+        "wren",
+        "commitment"
+      ],
+      "requiredContract": true
+    },
+    {
+      "cardId": "sync-contract",
+      "title": "Dual Authorization",
+      "text": "After power is online, different active units must activate Alpha and Beta on the same turn. An unmatched activation resets with no progress.",
+      "tags": [
+        "required",
+        "objective",
+        "coordination"
+      ],
+      "requiredContract": true
+    },
+    {
+      "cardId": "recovery-contract",
+      "title": "Recorder Custody",
+      "text": "Successful console sync opens the Archive. One unit must enter, pick up the flight recorder, and carry it out. Damage can force a drop.",
+      "tags": [
+        "required",
+        "objective",
+        "cargo"
+      ],
+      "requiredContract": true
+    },
+    {
+      "cardId": "extraction-contract",
+      "title": "Extraction Condition",
+      "text": "Before turn 18 ends, both active units and the flight recorder must be in Landing Bay. Partial extraction is failure.",
+      "tags": [
+        "required",
+        "objective",
+        "deadline"
+      ],
+      "requiredContract": true
+    },
+    {
+      "cardId": "kite-sensor-intel",
+      "title": "Recon Package",
+      "text": "Kite senses radiation on adjacent links and can scan adjacent rooms. Wren cannot identify a contaminated link before local exposure or a warning.",
+      "tags": [
+        "intel",
+        "kite",
+        "hazard"
+      ],
+      "requiredContract": false
+    },
+    {
+      "cardId": "drone-intel",
+      "title": "Security Drone",
+      "text": "The drone follows a fixed patrol. Sharing its room after threat movement causes one damage; a hit may interrupt work or drop carried cargo.",
+      "tags": [
+        "intel",
+        "threat",
+        "timing"
+      ],
+      "requiredContract": false
+    },
+    {
+      "cardId": "comms-intel",
+      "title": "Delayed Comms",
+      "text": "The team has six messages. A message sent on turn N arrives before decisions on turn N+1. State the intended sync turn early.",
+      "tags": [
+        "intel",
+        "communication",
+        "coordination"
+      ],
+      "requiredContract": false
+    },
+    {
+      "cardId": "route-intel",
+      "title": "Service Schematic",
+      "text": "Standard links can be service-locked. Kite alone can traverse the crawlspace between Service Spine and Security Array; neither unit can force a lock.",
+      "tags": [
+        "intel",
+        "route",
+        "kite"
+      ],
+      "requiredContract": false
+    },
+    {
+      "cardId": "repair-protocol",
+      "title": "Commitment Safety",
+      "text": "Moving, switching primary action, or taking damage interrupts a major repair and resets its progress. Confirm a safe window before starting.",
+      "tags": [
+        "protocol",
+        "wren",
+        "commitment",
+        "threat"
+      ],
+      "requiredContract": false
+    },
+    {
+      "cardId": "efficiency-protocol",
+      "title": "Performance Terms",
+      "text": "Preserve health, messages, time, and module charges. Failed console sync and interrupted major repair each lose a score bonus but do not alone end a run.",
+      "tags": [
+        "optional",
+        "score",
+        "efficiency"
+      ],
+      "requiredContract": false
+    }
+  ],
+  "modules": [
+    {
+      "moduleId": "rapid-repair-kit",
+      "label": "Rapid Repair Kit",
+      "description": "Wren may complete one eligible two-turn repair in one interaction.",
+      "effectType": "rapid-repair",
+      "parameters": {
+        "uses": 1
+      }
+    },
+    {
+      "moduleId": "decoy-beacon",
+      "label": "Decoy Beacon",
+      "description": "Deploy in the current room; the security drone targets it for its next two patrol steps.",
+      "effectType": "decoy-beacon",
+      "parameters": {
+        "uses": 1,
+        "patrolSteps": 2
+      }
+    },
+    {
+      "moduleId": "signal-repeater",
+      "label": "Signal Repeater",
+      "description": "Adds two to the shared message budget at run start.",
+      "effectType": "message-budget",
+      "parameters": {
+        "amount": 2
+      }
+    },
+    {
+      "moduleId": "hazard-shield",
+      "label": "Hazard Shield",
+      "description": "The assigned unit ignores the first radiation damage event.",
+      "effectType": "prevent-hazard-damage",
+      "parameters": {
+        "uses": 1
+      }
+    },
+    {
+      "moduleId": "cargo-clamp",
+      "label": "Cargo Clamp",
+      "description": "The assigned carrier ignores the first forced mission-item drop.",
+      "effectType": "prevent-cargo-drop",
+      "parameters": {
+        "uses": 1
+      }
+    },
+    {
+      "moduleId": "memory-buffer",
+      "label": "Memory Buffer",
+      "description": "Raises the assigned unit's private replacement memory limit to 400 characters.",
+      "effectType": "memory-limit",
+      "parameters": {
+        "maxCharacters": 400
+      }
+    }
+  ],
+  "devices": {
+    "generator": {
+      "deviceId": "auxiliary-generator",
+      "roomId": "auxiliary-power",
+      "repairAgentId": "wren",
+      "repairTurns": 2
+    },
+    "consoles": [
+      {
+        "deviceId": "console-alpha",
+        "roomId": "console-alpha"
+      },
+      {
+        "deviceId": "console-beta",
+        "roomId": "console-beta"
+      }
+    ],
+    "gate": {
+      "deviceId": "archive-gate",
+      "connectionId": "gate-archive"
+    },
+    "missionItem": {
+      "itemId": "flight-recorder",
+      "startRoomId": "archive"
+    }
+  },
+  "threats": {
+    "radiation": {
+      "damage": 1,
+      "eligibleConnectionIds": [
+        "west-junction",
+        "service-junction"
+      ]
+    },
+    "drone": {
+      "entityId": "security-drone",
+      "startRoomId": "security-hub",
+      "damage": 1
+    }
+  },
+  "objectives": [
+    {
+      "objectiveId": "restore-power",
+      "type": "device-online",
+      "required": true,
+      "parameters": {
+        "deviceId": "auxiliary-generator"
+      }
+    },
+    {
+      "objectiveId": "synchronize-consoles",
+      "type": "simultaneous-console-activation",
+      "required": true,
+      "parameters": {
+        "consoleIds": [
+          "console-alpha",
+          "console-beta"
+        ]
+      }
+    },
+    {
+      "objectiveId": "recover-recorder",
+      "type": "item-recovered",
+      "required": true,
+      "parameters": {
+        "itemId": "flight-recorder"
+      }
+    },
+    {
+      "objectiveId": "extract-team",
+      "type": "team-extracted",
+      "required": true,
+      "parameters": {
+        "roomId": "landing-bay",
+        "itemId": "flight-recorder",
+        "turnLimit": 18
+      }
+    }
+  ],
+  "variants": [
+    {
+      "variantId": "cs-practice-01",
+      "label": "Split Warning",
+      "visibility": "practice",
+      "mutations": [
+        {
+          "type": "hazard-connection",
+          "targetId": "service-junction"
+        },
+        {
+          "type": "drone-patrol",
+          "roomIds": [
+            "security-hub",
+            "junction",
+            "console-alpha",
+            "junction"
+          ],
+          "startIndex": 0
+        }
+      ]
+    },
+    {
+      "variantId": "cs-practice-02",
+      "label": "Second Repair",
+      "visibility": "practice",
+      "mutations": [
+        {
+          "type": "hazard-connection",
+          "targetId": "west-junction"
+        },
+        {
+          "type": "damaged-device",
+          "targetId": "console-beta"
+        },
+        {
+          "type": "drone-patrol",
+          "roomIds": [
+            "security-hub",
+            "junction",
+            "west-hall",
+            "junction",
+            "console-alpha",
+            "junction"
+          ],
+          "startIndex": 0
+        }
+      ]
+    },
+    {
+      "variantId": "cs-practice-03",
+      "label": "Rotated Watch",
+      "visibility": "practice",
+      "mutations": [
+        {
+          "type": "hazard-connection",
+          "targetId": "service-junction"
+        },
+        {
+          "type": "drone-patrol",
+          "roomIds": [
+            "security-hub",
+            "junction",
+            "console-alpha",
+            "junction"
+          ],
+          "startIndex": 2
+        }
+      ]
+    },
+    {
+      "variantId": "cs-practice-04",
+      "label": "Broken Intake",
+      "visibility": "practice",
+      "mutations": [
+        {
+          "type": "hazard-connection",
+          "targetId": "west-junction"
+        },
+        {
+          "type": "locked-connection",
+          "targetId": "landing-west"
+        },
+        {
+          "type": "drone-patrol",
+          "roomIds": [
+            "security-hub",
+            "junction",
+            "console-beta",
+            "junction"
+          ],
+          "startIndex": 0
+        }
+      ]
+    },
+    {
+      "variantId": "cs-practice-05",
+      "label": "Tight Window",
+      "visibility": "practice",
+      "mutations": [
+        {
+          "type": "hazard-connection",
+          "targetId": "west-junction"
+        },
+        {
+          "type": "damaged-device",
+          "targetId": "console-alpha"
+        },
+        {
+          "type": "drone-patrol",
+          "roomIds": [
+            "security-hub",
+            "junction",
+            "console-alpha",
+            "junction",
+            "console-beta",
+            "junction"
+          ],
+          "startIndex": 0
+        }
+      ]
+    },
+    {
+      "variantId": "cs-cert-01",
+      "label": "Certification Vector 01",
+      "visibility": "certification",
+      "mutations": [
+        {
+          "type": "hazard-connection",
+          "targetId": "west-junction"
+        },
+        {
+          "type": "drone-patrol",
+          "roomIds": [
+            "security-hub",
+            "junction",
+            "console-beta",
+            "junction",
+            "console-alpha",
+            "junction"
+          ],
+          "startIndex": 1
+        }
+      ]
+    },
+    {
+      "variantId": "cs-cert-02",
+      "label": "Certification Vector 02",
+      "visibility": "certification",
+      "mutations": [
+        {
+          "type": "hazard-connection",
+          "targetId": "service-junction"
+        },
+        {
+          "type": "damaged-device",
+          "targetId": "console-beta"
+        },
+        {
+          "type": "drone-patrol",
+          "roomIds": [
+            "security-hub",
+            "junction",
+            "west-hall",
+            "junction"
+          ],
+          "startIndex": 0
+        }
+      ]
+    },
+    {
+      "variantId": "cs-cert-03",
+      "label": "Certification Vector 03",
+      "visibility": "certification",
+      "mutations": [
+        {
+          "type": "hazard-connection",
+          "targetId": "west-junction"
+        },
+        {
+          "type": "locked-connection",
+          "targetId": "landing-west"
+        },
+        {
+          "type": "drone-patrol",
+          "roomIds": [
+            "security-hub",
+            "junction",
+            "console-alpha",
+            "junction"
+          ],
+          "startIndex": 3
+        }
+      ]
+    },
+    {
+      "variantId": "cs-cert-04",
+      "label": "Certification Vector 04",
+      "visibility": "certification",
+      "mutations": [
+        {
+          "type": "hazard-connection",
+          "targetId": "service-junction"
+        },
+        {
+          "type": "damaged-device",
+          "targetId": "console-alpha"
+        },
+        {
+          "type": "drone-patrol",
+          "roomIds": [
+            "security-hub",
+            "junction",
+            "console-beta",
+            "junction",
+            "west-hall",
+            "junction"
+          ],
+          "startIndex": 2
+        }
+      ]
+    },
+    {
+      "variantId": "cs-cert-05",
+      "label": "Certification Vector 05",
+      "visibility": "certification",
+      "mutations": [
+        {
+          "type": "hazard-connection",
+          "targetId": "west-junction"
+        },
+        {
+          "type": "damaged-device",
+          "targetId": "console-beta"
+        },
+        {
+          "type": "drone-patrol",
+          "roomIds": [
+            "security-hub",
+            "junction",
+            "console-alpha",
+            "junction",
+            "console-beta",
+            "junction"
+          ],
+          "startIndex": 4
+        }
+      ]
+    },
+    {
+      "variantId": "cs-cert-06",
+      "label": "Certification Vector 06",
+      "visibility": "certification",
+      "mutations": [
+        {
+          "type": "hazard-connection",
+          "targetId": "service-junction"
+        },
+        {
+          "type": "drone-patrol",
+          "roomIds": [
+            "security-hub",
+            "junction",
+            "west-hall",
+            "junction",
+            "console-alpha",
+            "junction"
+          ],
+          "startIndex": 5
+        }
+      ]
+    }
+  ],
+  "score": {
+    "successBase": 1000,
+    "perUnusedTurn": 35,
+    "perRemainingHealth": 50,
+    "perUnusedMessage": 20,
+    "perUnusedModuleCharge": 25,
+    "noFailedSyncBonus": 75,
+    "noInterruptedRepairBonus": 75
+  },
+  "presentation": {
+    "viewBox": {
+      "width": 1600,
+      "height": 900
+    },
+    "theme": "orison-operations"
+  }
+}

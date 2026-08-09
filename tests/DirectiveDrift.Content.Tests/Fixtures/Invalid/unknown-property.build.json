@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1",
+  "buildId": "invalid-extra",
+  "missionId": "cold-start",
+  "name": "Invalid Extra",
+  "version": 1,
+  "sharedDoctrine": "",
+  "agents": {
+    "kite": {
+      "roleOrder": "",
+      "briefingCardIds": [
+        "power-contract",
+        "sync-contract",
+        "recovery-contract",
+        "extraction-contract"
+      ],
+      "moduleId": "cargo-clamp"
+    },
+    "wren": {
+      "roleOrder": "",
+      "briefingCardIds": [
+        "power-contract",
+        "sync-contract",
+        "recovery-contract",
+        "extraction-contract"
+      ],
+      "moduleId": "rapid-repair-kit"
+    }
+  },
+  "unexpected": true
+}

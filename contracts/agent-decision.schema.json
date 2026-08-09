@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://directive-drift.example/contracts/agent-decision.schema.json",
+  "title": "Directive Drift Agent Decision",
+  "description": "Untrusted structured output returned by one autonomous agent for one turn.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "actionId",
+    "message",
+    "rationale",
+    "memory"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1"
+    },
+    "actionId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z][a-z0-9-]*(?::[a-z][a-z0-9-]*)?$"
+    },
+    "message": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "toAgentId",
+            "text"
+          ],
+          "properties": {
+            "toAgentId": {
+              "$ref": "#/$defs/id"
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120,
+              "pattern": "^[^\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]*$"
+            }
+          }
+        }
+      ]
+    },
+    "rationale": {
+      "type": "string",
+      "maxLength": 180,
+      "pattern": "^[^\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]*$"
+    },
+    "memory": {
+      "description": "Replacement private memory. Runtime applies the lower 240-character limit unless Memory Buffer is equipped.",
+      "type": "string",
+      "maxLength": 400,
+      "pattern": "^[^\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]*$"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9-]*$"
+    }
+  }
+}

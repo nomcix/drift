@@ -1,0 +1,850 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://directive-drift.example/contracts/mission.schema.json",
+  "title": "Directive Drift Mission Definition",
+  "description": "Authored, versioned mission content. Cross-reference and solver invariants are enforced after schema validation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "missionId",
+    "contentVersion",
+    "rulesVersion",
+    "scoreVersion",
+    "title",
+    "playerBriefing",
+    "rules",
+    "agents",
+    "rooms",
+    "connections",
+    "briefingCards",
+    "modules",
+    "devices",
+    "threats",
+    "objectives",
+    "variants",
+    "score",
+    "presentation"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1"
+    },
+    "missionId": {
+      "$ref": "#/$defs/id"
+    },
+    "contentVersion": {
+      "$ref": "#/$defs/version"
+    },
+    "rulesVersion": {
+      "$ref": "#/$defs/id"
+    },
+    "scoreVersion": {
+      "$ref": "#/$defs/id"
+    },
+    "title": {
+      "$ref": "#/$defs/label"
+    },
+    "playerBriefing": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "rules": {
+      "$ref": "#/$defs/rules"
+    },
+    "agents": {
+      "type": "array",
+      "description": "Exactly two active autonomous agent definitions; IDs, labels, starts, health, and capabilities are mission-authored.",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "$ref": "#/$defs/agent"
+      }
+    },
+    "rooms": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "$ref": "#/$defs/room"
+      }
+    },
+    "connections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/connection"
+      }
+    },
+    "briefingCards": {
+      "type": "array",
+      "description": "The mission-authored briefing catalogue eligible for build allocation.",
+      "minItems": 10,
+      "maxItems": 10,
+      "items": {
+        "$ref": "#/$defs/card"
+      }
+    },
+    "modules": {
+      "type": "array",
+      "description": "The mission-authored support-module catalogue available to builds.",
+      "minItems": 2,
+      "items": {
+        "$ref": "#/$defs/module"
+      }
+    },
+    "devices": {
+      "$ref": "#/$defs/devices"
+    },
+    "threats": {
+      "$ref": "#/$defs/threats"
+    },
+    "objectives": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/objective"
+      }
+    },
+    "variants": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/variant"
+      }
+    },
+    "score": {
+      "$ref": "#/$defs/score"
+    },
+    "presentation": {
+      "$ref": "#/$defs/presentation"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[^\\u0000-\\u001F\\u007F]*$"
+    },
+    "nonNegativeInteger": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "positiveInteger": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "x",
+        "y"
+      ],
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      }
+    },
+    "size": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "w",
+        "h"
+      ],
+      "properties": {
+        "w": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "h": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "turnLimit",
+        "baseMessageBudget",
+        "briefingSlotsPerAgent",
+        "messageDelayTurns",
+        "maxMessageLength",
+        "sharedDoctrineMaxLength",
+        "roleOrderMaxLength",
+        "baseMemoryMaxLength"
+      ],
+      "properties": {
+        "turnLimit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "baseMessageBudget": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "briefingSlotsPerAgent": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        },
+        "messageDelayTurns": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "maxMessageLength": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 500
+        },
+        "sharedDoctrineMaxLength": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "roleOrderMaxLength": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "baseMemoryMaxLength": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2000
+        }
+      }
+    },
+    "agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agentId",
+        "label",
+        "health",
+        "startRoomId",
+        "capabilities"
+      ],
+      "properties": {
+        "agentId": {
+          "$ref": "#/$defs/id"
+        },
+        "label": {
+          "$ref": "#/$defs/label"
+        },
+        "health": {
+          "$ref": "#/$defs/positiveInteger"
+        },
+        "startRoomId": {
+          "$ref": "#/$defs/id"
+        },
+        "capabilities": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        }
+      }
+    },
+    "room": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "roomId",
+        "label",
+        "tags",
+        "visual"
+      ],
+      "properties": {
+        "roomId": {
+          "$ref": "#/$defs/id"
+        },
+        "label": {
+          "$ref": "#/$defs/label"
+        },
+        "tags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "visual": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "shape",
+            "anchor",
+            "size",
+            "rotation",
+            "labelPlacement"
+          ],
+          "properties": {
+            "shape": {
+              "enum": [
+                "docking-crescent",
+                "tapered-transit",
+                "service-hex",
+                "angled-spine",
+                "relay-ring",
+                "radar-octagon",
+                "reactor-ring",
+                "console-wedge-up",
+                "console-wedge-down",
+                "archive-iris",
+                "archive-shield"
+              ]
+            },
+            "anchor": {
+              "$ref": "#/$defs/point"
+            },
+            "size": {
+              "$ref": "#/$defs/size"
+            },
+            "rotation": {
+              "type": "number",
+              "minimum": -360,
+              "maximum": 360
+            },
+            "labelPlacement": {
+              "enum": [
+                "inside",
+                "above",
+                "below",
+                "left",
+                "right"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "connection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "connectionId",
+        "fromRoomId",
+        "toRoomId",
+        "bidirectional",
+        "initialState",
+        "hazardEligible",
+        "visualWaypoints"
+      ],
+      "properties": {
+        "connectionId": {
+          "$ref": "#/$defs/id"
+        },
+        "fromRoomId": {
+          "$ref": "#/$defs/id"
+        },
+        "toRoomId": {
+          "$ref": "#/$defs/id"
+        },
+        "bidirectional": {
+          "type": "boolean"
+        },
+        "initialState": {
+          "enum": [
+            "open",
+            "locked"
+          ]
+        },
+        "allowedAgentIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "hazardEligible": {
+          "type": "boolean"
+        },
+        "visualWaypoints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/point"
+          }
+        }
+      }
+    },
+    "card": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cardId",
+        "title",
+        "text",
+        "tags",
+        "requiredContract"
+      ],
+      "properties": {
+        "cardId": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "$ref": "#/$defs/label"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "tags": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "requiredContract": {
+          "type": "boolean"
+        }
+      }
+    },
+    "module": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "moduleId",
+        "label",
+        "description",
+        "effectType",
+        "parameters"
+      ],
+      "properties": {
+        "moduleId": {
+          "$ref": "#/$defs/id"
+        },
+        "label": {
+          "$ref": "#/$defs/label"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "effectType": {
+          "enum": [
+            "rapid-repair",
+            "decoy-beacon",
+            "message-budget",
+            "prevent-hazard-damage",
+            "prevent-cargo-drop",
+            "memory-limit"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "devices": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generator",
+        "consoles",
+        "gate",
+        "missionItem"
+      ],
+      "properties": {
+        "generator": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "deviceId",
+            "roomId",
+            "repairAgentId",
+            "repairTurns"
+          ],
+          "properties": {
+            "deviceId": {
+              "$ref": "#/$defs/id"
+            },
+            "roomId": {
+              "$ref": "#/$defs/id"
+            },
+            "repairAgentId": {
+              "$ref": "#/$defs/id"
+            },
+            "repairTurns": {
+              "$ref": "#/$defs/positiveInteger"
+            }
+          }
+        },
+        "consoles": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "deviceId",
+              "roomId"
+            ],
+            "properties": {
+              "deviceId": {
+                "$ref": "#/$defs/id"
+              },
+              "roomId": {
+                "$ref": "#/$defs/id"
+              }
+            }
+          }
+        },
+        "gate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "deviceId",
+            "connectionId"
+          ],
+          "properties": {
+            "deviceId": {
+              "$ref": "#/$defs/id"
+            },
+            "connectionId": {
+              "$ref": "#/$defs/id"
+            }
+          }
+        },
+        "missionItem": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "itemId",
+            "startRoomId"
+          ],
+          "properties": {
+            "itemId": {
+              "$ref": "#/$defs/id"
+            },
+            "startRoomId": {
+              "$ref": "#/$defs/id"
+            }
+          }
+        }
+      }
+    },
+    "threats": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "radiation",
+        "drone"
+      ],
+      "properties": {
+        "radiation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "damage",
+            "eligibleConnectionIds"
+          ],
+          "properties": {
+            "damage": {
+              "$ref": "#/$defs/positiveInteger"
+            },
+            "eligibleConnectionIds": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "$ref": "#/$defs/id"
+              }
+            }
+          }
+        },
+        "drone": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "entityId",
+            "startRoomId",
+            "damage"
+          ],
+          "properties": {
+            "entityId": {
+              "$ref": "#/$defs/id"
+            },
+            "startRoomId": {
+              "$ref": "#/$defs/id"
+            },
+            "damage": {
+              "$ref": "#/$defs/positiveInteger"
+            }
+          }
+        }
+      }
+    },
+    "objective": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "objectiveId",
+        "type",
+        "required",
+        "parameters"
+      ],
+      "properties": {
+        "objectiveId": {
+          "$ref": "#/$defs/id"
+        },
+        "type": {
+          "enum": [
+            "device-online",
+            "simultaneous-console-activation",
+            "item-recovered",
+            "team-extracted"
+          ]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "variant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "variantId",
+        "label",
+        "visibility",
+        "mutations"
+      ],
+      "properties": {
+        "variantId": {
+          "$ref": "#/$defs/id"
+        },
+        "label": {
+          "$ref": "#/$defs/label"
+        },
+        "visibility": {
+          "enum": [
+            "practice",
+            "certification"
+          ]
+        },
+        "mutations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/mutation"
+          }
+        }
+      }
+    },
+    "mutation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "targetId"
+          ],
+          "properties": {
+            "type": {
+              "const": "hazard-connection"
+            },
+            "targetId": {
+              "$ref": "#/$defs/id"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "targetId"
+          ],
+          "properties": {
+            "type": {
+              "const": "damaged-device"
+            },
+            "targetId": {
+              "$ref": "#/$defs/id"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "targetId"
+          ],
+          "properties": {
+            "type": {
+              "const": "locked-connection"
+            },
+            "targetId": {
+              "$ref": "#/$defs/id"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "roomIds",
+            "startIndex"
+          ],
+          "properties": {
+            "type": {
+              "const": "drone-patrol"
+            },
+            "roomIds": {
+              "type": "array",
+              "minItems": 2,
+              "items": {
+                "$ref": "#/$defs/id"
+              }
+            },
+            "startIndex": {
+              "$ref": "#/$defs/nonNegativeInteger"
+            }
+          }
+        }
+      ]
+    },
+    "score": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "successBase",
+        "perUnusedTurn",
+        "perRemainingHealth",
+        "perUnusedMessage",
+        "perUnusedModuleCharge",
+        "noFailedSyncBonus",
+        "noInterruptedRepairBonus"
+      ],
+      "properties": {
+        "successBase": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "perUnusedTurn": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "perRemainingHealth": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "perUnusedMessage": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "perUnusedModuleCharge": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "noFailedSyncBonus": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "noInterruptedRepairBonus": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        }
+      }
+    },
+    "presentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "viewBox",
+        "theme"
+      ],
+      "properties": {
+        "viewBox": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "width",
+            "height"
+          ],
+          "properties": {
+            "width": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "height": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          }
+        },
+        "theme": {
+          "$ref": "#/$defs/id"
+        }
+      }
+    }
+  }
+}

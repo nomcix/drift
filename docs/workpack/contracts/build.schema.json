@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://directive-drift.example/contracts/build.schema.json",
+  "title": "Directive Drift Build",
+  "description": "A portable immutable version of a player's pre-run command build.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "buildId",
+    "missionId",
+    "name",
+    "version",
+    "sharedDoctrine",
+    "agents"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1"
+    },
+    "buildId": {
+      "$ref": "#/$defs/id"
+    },
+    "missionId": {
+      "$ref": "#/$defs/id"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 48,
+      "pattern": "^[^\\u0000-\\u001F\\u007F]*$"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "sharedDoctrine": {
+      "type": "string",
+      "maxLength": 240,
+      "pattern": "^[^\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]*$"
+    },
+    "agents": {
+      "type": "object",
+      "description": "Exactly two build entries keyed by agent IDs from the selected mission.",
+      "minProperties": 2,
+      "maxProperties": 2,
+      "propertyNames": {
+        "$ref": "#/$defs/id"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/agentBuild"
+      }
+    },
+    "hypothesis": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 280,
+      "pattern": "^[^\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]*$"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "agentBuild": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "roleOrder",
+        "briefingCardIds",
+        "moduleId"
+      ],
+      "properties": {
+        "roleOrder": {
+          "type": "string",
+          "maxLength": 160,
+          "pattern": "^[^\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]*$"
+        },
+        "briefingCardIds": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "moduleId": {
+          "$ref": "#/$defs/id"
+        }
+      }
+    }
+  }
+}

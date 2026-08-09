@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../DirectiveDrift.Core/DirectiveDrift.Core.csproj" />
+  </ItemGroup>
+</Project>

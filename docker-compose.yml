@@ -1,0 +1,16 @@
+name: directive-drift
+
+services:
+  app:
+    build:
+      context: .
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DirectiveDrift: Data Source=/data/directive-drift.db
+    ports:
+      - "8080:8080"
+    volumes:
+      - directive-drift-data:/data
+
+volumes:
+  directive-drift-data:

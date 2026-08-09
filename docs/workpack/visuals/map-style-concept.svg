@@ -1,0 +1,759 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Directive Drift operations map concept</title>
+  <desc id="desc">A dark orbital station schematic with irregular rooms, glowing conduits, two autonomous agent tokens, a security drone, radiation hazard, objectives, side telemetry, and a turn timeline.</desc>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#02050b"/>
+      <stop offset="0.55" stop-color="#07101a"/>
+      <stop offset="1" stop-color="#03070e"/>
+    </linearGradient>
+
+    <radialGradient id="mapHalo" cx="52%" cy="46%" r="58%">
+      <stop offset="0" stop-color="#123149" stop-opacity=".42"/>
+      <stop offset=".5" stop-color="#0a1b2a" stop-opacity=".18"/>
+      <stop offset="1" stop-color="#03070e" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0c1a28" stop-opacity=".96"/>
+      <stop offset="1" stop-color="#08111b" stop-opacity=".93"/>
+    </linearGradient>
+
+    <linearGradient id="room" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#122b3b"/>
+      <stop offset=".55" stop-color="#0b1b27"/>
+      <stop offset="1" stop-color="#07121d"/>
+    </linearGradient>
+
+    <linearGradient id="roomPowered" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#0d2930"/>
+      <stop offset=".65" stop-color="#123542"/>
+      <stop offset="1" stop-color="#17444d"/>
+    </linearGradient>
+
+    <linearGradient id="archiveFill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#201a39"/>
+      <stop offset="1" stop-color="#0d1326"/>
+    </linearGradient>
+
+    <linearGradient id="kiteGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f5feff"/>
+      <stop offset=".35" stop-color="#58e6ff"/>
+      <stop offset="1" stop-color="#1889a7"/>
+    </linearGradient>
+
+    <linearGradient id="wrenGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff4df"/>
+      <stop offset=".4" stop-color="#ffad66"/>
+      <stop offset="1" stop-color="#be5c2c"/>
+    </linearGradient>
+
+    <pattern id="grid" width="42" height="42" patternUnits="userSpaceOnUse">
+      <path d="M42 0H0V42" fill="none" stroke="#2a5163" stroke-opacity=".09" stroke-width="1"/>
+      <circle cx="0" cy="0" r="1.3" fill="#78b6c9" fill-opacity=".12"/>
+    </pattern>
+
+    <pattern id="microGrid" width="8" height="8" patternUnits="userSpaceOnUse">
+      <path d="M8 0H0V8" fill="none" stroke="#85c9dc" stroke-opacity=".055" stroke-width=".6"/>
+    </pattern>
+
+    <pattern id="dangerHatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(24)">
+      <rect width="10" height="10" fill="#401320" fill-opacity=".55"/>
+      <rect width="3" height="10" fill="#ff5477" fill-opacity=".42"/>
+    </pattern>
+
+    <filter id="softGlow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="bigGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="9" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1.25 0"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="panelShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="18" flood-color="#000" flood-opacity=".48"/>
+    </filter>
+
+    <clipPath id="mapClip">
+      <path d="M306 93H1304L1316 105V758L1304 770H306L294 758V105Z"/>
+    </clipPath>
+
+    <marker id="chevronCyan" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+      <path d="M1 1L8 5 1 9 3.5 5Z" fill="#58e6ff"/>
+    </marker>
+
+    <symbol id="tinyDiamond" viewBox="-8 -8 16 16">
+      <path d="M0-7L7 0 0 7-7 0Z" fill="currentColor"/>
+    </symbol>
+  </defs>
+
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+
+    .ui {
+      font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+      fill: #d8edf2;
+    }
+
+    .mono {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    .label {
+      fill: #7896a2;
+      font-size: 10px;
+      font-weight: 650;
+      letter-spacing: 1.7px;
+    }
+
+    .small {
+      fill: #9ab3bd;
+      font-size: 11px;
+    }
+
+    .room-title {
+      fill: #d8edf2;
+      font-size: 11px;
+      font-weight: 720;
+      letter-spacing: 1.05px;
+      text-anchor: middle;
+    }
+
+    .room-id {
+      fill: #60818e;
+      font-size: 8px;
+      letter-spacing: 1px;
+      text-anchor: middle;
+    }
+
+    .panel-edge {
+      fill: url(#panel);
+      stroke: #214457;
+      stroke-width: 1;
+    }
+
+    .conduit-base {
+      fill: none;
+      stroke: #102b3c;
+      stroke-width: 11;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .conduit-rail {
+      fill: none;
+      stroke: #31586a;
+      stroke-opacity: .7;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .conduit-live {
+      fill: none;
+      stroke: #69d7d0;
+      stroke-opacity: .8;
+      stroke-width: 2.4;
+      stroke-linecap: round;
+      stroke-dasharray: 4 11;
+      animation: flow 3.8s linear infinite;
+    }
+
+    .conduit-kite {
+      fill: none;
+      stroke: #58e6ff;
+      stroke-opacity: .95;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-dasharray: 1 9;
+      animation: flow 2.6s linear infinite;
+    }
+
+    .room {
+      fill: url(#room);
+      stroke: #315a6c;
+      stroke-width: 1.4;
+    }
+
+    .room.powered {
+      fill: url(#roomPowered);
+      stroke: #4c8d91;
+    }
+
+    .room-dim {
+      fill: #08131e;
+      stroke: #1d3a4b;
+      stroke-width: 1.2;
+    }
+
+    .inner-line {
+      fill: none;
+      stroke: #5a8a98;
+      stroke-opacity: .42;
+      stroke-width: 1;
+    }
+
+    .objective-ring {
+      fill: none;
+      stroke: #80f0a7;
+      stroke-width: 2;
+      stroke-dasharray: 3 6;
+      animation: rotate 11s linear infinite;
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .warning-pulse {
+      animation: warn 1.8s ease-in-out infinite;
+    }
+
+    .radar {
+      animation: rotate 4.8s linear infinite;
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .repair-tick {
+      animation: rotate 2.2s linear infinite;
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .message-line {
+      fill: none;
+      stroke: #58e6ff;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-dasharray: 2 9;
+      animation: flow 1.7s linear infinite;
+      filter: url(#softGlow);
+    }
+
+    .scan-arc {
+      fill: none;
+      stroke: #58e6ff;
+      stroke-width: 1.5;
+      stroke-opacity: .48;
+      stroke-dasharray: 5 8;
+      animation: scan 2.6s ease-out infinite;
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .blink {
+      animation: blink 2.8s ease-in-out infinite;
+    }
+
+    @keyframes flow {
+      to { stroke-dashoffset: -60; }
+    }
+
+    @keyframes rotate {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes warn {
+      0%, 100% { opacity: .48; }
+      50% { opacity: 1; }
+    }
+
+    @keyframes scan {
+      0% { opacity: .1; transform: scale(.75); }
+      55% { opacity: .58; }
+      100% { opacity: 0; transform: scale(1.25); }
+    }
+
+    @keyframes blink {
+      0%, 87%, 100% { opacity: 1; }
+      91% { opacity: .32; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .conduit-live,
+      .conduit-kite,
+      .objective-ring,
+      .warning-pulse,
+      .radar,
+      .repair-tick,
+      .message-line,
+      .scan-arc,
+      .blink {
+        animation: none;
+      }
+    }
+  </style>
+
+  <!-- Deep field -->
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <rect width="1600" height="900" fill="url(#grid)"/>
+  <ellipse cx="810" cy="430" rx="680" ry="490" fill="url(#mapHalo)"/>
+  <g fill="#a9e9f4">
+    <circle cx="70" cy="86" r="1" opacity=".35"/>
+    <circle cx="244" cy="152" r=".8" opacity=".25"/>
+    <circle cx="1436" cy="90" r=".9" opacity=".4"/>
+    <circle cx="1514" cy="315" r=".7" opacity=".32"/>
+    <circle cx="97" cy="781" r=".8" opacity=".28"/>
+    <circle cx="1388" cy="826" r="1.1" opacity=".32"/>
+    <circle cx="1001" cy="62" r=".7" opacity=".26"/>
+    <circle cx="534" cy="832" r=".9" opacity=".22"/>
+  </g>
+
+  <!-- Header -->
+  <g class="ui">
+    <path d="M25 24H1575V70H25Z" fill="#07111b" fill-opacity=".84" stroke="#19384a"/>
+    <path d="M25 24H333" stroke="#58e6ff" stroke-width="2"/>
+    <text x="46" y="51" font-size="18" font-weight="780" letter-spacing="3.4">DIRECTIVE DRIFT</text>
+    <text x="289" y="51" class="label">/ ORISON</text>
+    <text x="805" y="49" class="label" text-anchor="middle">COLD START · TRAINING LAYOUT A</text>
+    <text x="1380" y="43" class="label">TURN</text>
+    <text x="1430" y="52" font-size="24" font-weight="720" fill="#f5feff">07</text>
+    <text x="1468" y="49" class="label">/ 18</text>
+    <circle cx="1543" cy="47" r="5" fill="#80f0a7" filter="url(#softGlow)"/>
+  </g>
+
+  <!-- Left command rail -->
+  <g class="ui" filter="url(#panelShadow)">
+    <path class="panel-edge" d="M25 91H273L285 103V758L273 770H25Z"/>
+    <text x="48" y="123" class="label">COMMAND BUILD</text>
+    <text x="48" y="148" font-size="15" font-weight="720">SPLIT-LANTERN / v4</text>
+    <text x="48" y="168" class="small">Specialized 5 · Shared 2</text>
+
+    <path d="M48 191H262" stroke="#24475a"/>
+    <text x="48" y="217" class="label">SHARED DOCTRINE</text>
+    <rect x="48" y="230" width="214" height="74" rx="7" fill="#0c1d2a" stroke="#2b5669"/>
+    <text x="61" y="251" class="small">
+      <tspan x="61" dy="0">Protect survival and extraction.</tspan>
+      <tspan x="61" dy="17">Announce commitments and</tspan>
+      <tspan x="61" dy="17">intended sync turns early.</tspan>
+    </text>
+
+    <g transform="translate(48 330)">
+      <path d="M0 7L8 0H214V150H0Z" fill="#0a1b27" stroke="#2c6070"/>
+      <path d="M0 7L8 0H58" stroke="#58e6ff" stroke-width="2"/>
+      <path d="M13 31L25 18 37 31 25 44Z" fill="url(#kiteGrad)" filter="url(#softGlow)"/>
+      <text x="51" y="29" font-size="14" font-weight="760">KITE</text>
+      <text x="51" y="44" class="label">RECON / COURIER</text>
+      <g transform="translate(13 60)">
+        <rect width="90" height="28" rx="4" fill="#102938" stroke="#3b7181"/>
+        <text x="45" y="18" class="label" text-anchor="middle">SYNC</text>
+        <rect x="98" width="103" height="28" rx="4" fill="#102938" stroke="#3b7181"/>
+        <text x="149.5" y="18" class="label" text-anchor="middle">RECORDER</text>
+        <rect y="36" width="90" height="28" rx="4" fill="#102938" stroke="#3b7181"/>
+        <text x="45" y="54" class="label" text-anchor="middle">SENSORS</text>
+        <rect x="98" y="36" width="103" height="28" rx="4" fill="#102938" stroke="#3b7181"/>
+        <text x="149.5" y="54" class="label" text-anchor="middle">ROUTES</text>
+      </g>
+      <text x="13" y="139" class="small" fill="#58e6ff">MODULE · CARGO CLAMP</text>
+    </g>
+
+    <g transform="translate(48 500)">
+      <path d="M0 7L8 0H214V150H0Z" fill="#0a1b27" stroke="#6d4b36"/>
+      <path d="M0 7L8 0H58" stroke="#ffad66" stroke-width="2"/>
+      <path d="M14 21L25 15 36 21V34L25 40 14 34Z" fill="url(#wrenGrad)" filter="url(#softGlow)"/>
+      <text x="51" y="29" font-size="14" font-weight="760">WREN</text>
+      <text x="51" y="44" class="label">ENGINEER / ANCHOR</text>
+      <g transform="translate(13 60)">
+        <rect width="90" height="28" rx="4" fill="#2a201a" stroke="#70513a"/>
+        <text x="45" y="18" class="label" text-anchor="middle">POWER</text>
+        <rect x="98" width="103" height="28" rx="4" fill="#2a201a" stroke="#70513a"/>
+        <text x="149.5" y="18" class="label" text-anchor="middle">SYNC</text>
+        <rect y="36" width="90" height="28" rx="4" fill="#2a201a" stroke="#70513a"/>
+        <text x="45" y="54" class="label" text-anchor="middle">COMMS</text>
+        <rect x="98" y="36" width="103" height="28" rx="4" fill="#2a201a" stroke="#70513a"/>
+        <text x="149.5" y="54" class="label" text-anchor="middle">REPAIR</text>
+      </g>
+      <text x="13" y="139" class="small" fill="#ffad66">MODULE · REPAIR KIT</text>
+    </g>
+
+    <path d="M48 674H262" stroke="#24475a"/>
+    <text x="48" y="704" class="label">INFORMATION TOPOLOGY</text>
+    <circle cx="56" cy="729" r="4" fill="#58e6ff"/>
+    <text x="69" y="733" class="small">Kite only · 2</text>
+    <circle cx="154" cy="729" r="4" fill="#ffad66"/>
+    <text x="167" y="733" class="small">Wren only · 2</text>
+    <circle cx="56" cy="750" r="4" fill="#b49aff"/>
+    <text x="69" y="754" class="small">Shared · 2</text>
+  </g>
+
+  <!-- Main map frame -->
+  <path d="M306 93H1304L1316 105V758L1304 770H306L294 758V105Z" fill="#06101a" fill-opacity=".72" stroke="#23495c" filter="url(#panelShadow)"/>
+  <path d="M306 93H501" stroke="#58e6ff" stroke-width="2"/>
+  <path d="M1109 770H1304L1316 758" stroke="#b49aff" stroke-width="1.5"/>
+  <g clip-path="url(#mapClip)">
+    <rect x="294" y="93" width="1022" height="677" fill="url(#microGrid)"/>
+    <path d="M305 696C482 593 535 195 765 170C1002 145 1114 302 1308 247" fill="none" stroke="#1f5a70" stroke-opacity=".08" stroke-width="110"/>
+    <path d="M320 206C547 306 740 111 1040 229C1183 285 1250 471 1315 598" fill="none" stroke="#7d5dd0" stroke-opacity=".05" stroke-width="70"/>
+
+    <!-- Hull callouts -->
+    <g class="ui mono" fill="#436674" font-size="8" letter-spacing="1.3">
+      <text x="319" y="119">ORISON LOCAL / DECK 04</text>
+      <text x="1213" y="119">TOPOLOGY 11:12</text>
+      <text x="319" y="744">POWER BUS // PARTIAL</text>
+      <text x="1174" y="744">LENS // COMMAND</text>
+    </g>
+
+    <!-- Inactive conduit beds -->
+    <g>
+      <path class="conduit-base" d="M405 430C449 423 480 414 521 414"/>
+      <path class="conduit-base" d="M392 466C408 538 425 613 447 660"/>
+      <path class="conduit-base" d="M592 414C662 412 713 422 756 430"/>
+      <path class="conduit-base" d="M493 681C539 681 575 667 612 650"/>
+      <path class="conduit-base" d="M687 633C724 573 750 518 773 474"/>
+      <path class="conduit-base" d="M796 382C792 333 785 287 781 245"/>
+      <path class="conduit-base" d="M798 480C799 548 800 611 800 660"/>
+      <path class="conduit-base" d="M842 411C904 382 952 348 1004 328"/>
+      <path class="conduit-base" d="M842 451C904 481 953 528 1004 551"/>
+      <path class="conduit-base" d="M845 431C956 431 1074 432 1160 432"/>
+      <path class="conduit-base" d="M1231 432C1264 432 1290 432 1321 432"/>
+      <path class="conduit-base" d="M676 626C661 538 669 398 758 244"/>
+    </g>
+
+    <!-- Rails -->
+    <g>
+      <path class="conduit-rail" d="M405 426C449 419 480 410 521 410"/>
+      <path class="conduit-rail" d="M405 434C449 427 480 418 521 418"/>
+      <path class="conduit-rail" d="M388 466C404 538 421 613 443 660"/>
+      <path class="conduit-rail" d="M396 466C412 538 429 613 451 660"/>
+      <path class="conduit-rail" d="M592 410C662 408 713 418 756 426"/>
+      <path class="conduit-rail" d="M592 418C662 416 713 426 756 434"/>
+      <path class="conduit-rail" d="M493 677C539 677 575 663 612 646"/>
+      <path class="conduit-rail" d="M493 685C539 685 575 671 612 654"/>
+      <path class="conduit-rail" d="M683 631C720 571 746 516 769 472"/>
+      <path class="conduit-rail" d="M691 635C728 575 754 520 777 476"/>
+      <path class="conduit-rail" d="M792 382C788 333 781 287 777 245"/>
+      <path class="conduit-rail" d="M800 382C796 333 789 287 785 245"/>
+      <path class="conduit-rail" d="M794 480C795 548 796 611 796 660"/>
+      <path class="conduit-rail" d="M802 480C803 548 804 611 804 660"/>
+      <path class="conduit-rail" d="M842 407C904 378 952 344 1004 324"/>
+      <path class="conduit-rail" d="M842 415C904 386 952 352 1004 332"/>
+      <path class="conduit-rail" d="M842 447C904 477 953 524 1004 547"/>
+      <path class="conduit-rail" d="M842 455C904 485 953 532 1004 555"/>
+      <path class="conduit-rail" d="M845 427C956 427 1074 428 1160 428"/>
+      <path class="conduit-rail" d="M845 435C956 435 1074 436 1160 436"/>
+      <path class="conduit-rail" d="M1231 428C1264 428 1290 428 1321 428"/>
+      <path class="conduit-rail" d="M1231 436C1264 436 1290 436 1321 436"/>
+      <path class="conduit-rail" d="M672 627C657 538 665 398 754 242" stroke-dasharray="3 8"/>
+      <path class="conduit-rail" d="M680 625C665 538 673 398 762 246" stroke-dasharray="3 8"/>
+    </g>
+
+    <!-- Live power and recon traces -->
+    <g filter="url(#softGlow)">
+      <path class="conduit-live" d="M800 660C800 611 799 548 798 480"/>
+      <path class="conduit-live" d="M842 411C904 382 952 348 1004 328"/>
+      <path class="conduit-live" d="M842 451C904 481 953 528 1004 551"/>
+      <path class="conduit-kite" d="M676 626C661 538 669 398 758 244"/>
+    </g>
+
+    <!-- Radiation contamination on service link -->
+    <path d="M686 634C717 582 744 528 770 476" fill="none" stroke="url(#dangerHatch)" stroke-width="13" stroke-linecap="round" opacity=".5"/>
+    <g class="warning-pulse" color="#ff5477" filter="url(#softGlow)">
+      <use href="#tinyDiamond" x="706" y="567" width="14" height="14"/>
+      <use href="#tinyDiamond" x="729" y="528" width="14" height="14"/>
+      <use href="#tinyDiamond" x="749" y="489" width="14" height="14"/>
+    </g>
+    <g class="ui mono">
+      <path d="M702 574H645V594" fill="none" stroke="#ff5477" stroke-width="1"/>
+      <text x="638" y="608" text-anchor="end" fill="#ff8198" font-size="8" letter-spacing="1.2">RADIATION / CONFIRMED</text>
+    </g>
+
+    <!-- LANDING BAY -->
+    <g class="ui">
+      <path class="room powered" d="M337 375Q309 431 337 491L371 477 397 496 430 477 416 446 433 414 416 383 371 398Z"/>
+      <path class="inner-line" d="M350 395Q332 431 350 469L372 459 395 475 414 466 403 444 417 415 404 399 371 414Z"/>
+      <path d="M325 403L345 411M320 431L342 431M325 459L346 451" stroke="#80f0a7" stroke-width="2" opacity=".72"/>
+      <text x="378" y="427" class="room-title">LANDING</text>
+      <text x="378" y="442" class="room-title">BAY</text>
+      <text x="378" y="462" class="room-id mono">EXTRACT</text>
+      <circle cx="377" cy="431" r="62" class="objective-ring" opacity=".36"/>
+    </g>
+
+    <!-- WEST TRANSIT -->
+    <g class="ui">
+      <path class="room powered" d="M520 382L579 374 596 405 582 445 525 448 508 416Z"/>
+      <path class="inner-line" d="M529 394L570 389 583 408 573 431 532 434 520 415Z"/>
+      <path d="M530 412H573" stroke="#6fb5c5" stroke-width="1.5" stroke-dasharray="5 6"/>
+      <text x="551" y="408" class="room-title">WEST</text>
+      <text x="551" y="423" class="room-title">TRANSIT</text>
+      <text x="551" y="462" class="room-id mono">WT-02</text>
+    </g>
+
+    <!-- MAINTENANCE -->
+    <g class="ui">
+      <path class="room powered" d="M429 654L449 632H485L505 654V704L482 722H447L425 701Z"/>
+      <path class="inner-line" d="M441 660L454 646H480L493 661V695L478 708H452L439 695Z"/>
+      <path d="M454 673H478M466 661V696" stroke="#ffad66" stroke-width="2" opacity=".6"/>
+      <text x="465" y="680" class="room-title">MAINT</text>
+      <text x="465" y="695" class="room-id mono">M-01</text>
+    </g>
+
+    <!-- SERVICE SPINE -->
+    <g class="ui">
+      <path class="room powered" d="M609 620L666 608 692 630 682 673 631 691 600 666Z"/>
+      <path class="inner-line" d="M621 631L660 622 678 635 671 661 635 676 614 661Z"/>
+      <path d="M625 649L671 638M631 663L666 654" stroke="#6fb5c5" stroke-width="1.2" opacity=".5"/>
+      <text x="647" y="647" class="room-title">SERVICE</text>
+      <text x="647" y="662" class="room-title">SPINE</text>
+      <text x="647" y="705" class="room-id mono">SS-04</text>
+    </g>
+
+    <!-- RELAY NEXUS -->
+    <g class="ui">
+      <circle cx="798" cy="431" r="51" class="room powered"/>
+      <circle cx="798" cy="431" r="38" fill="#091b26" stroke="#4f8793" stroke-width="1.2"/>
+      <circle cx="798" cy="431" r="23" fill="none" stroke="#5ce0d7" stroke-opacity=".55" stroke-width="2" stroke-dasharray="3 5"/>
+      <path d="M798 387V403M842 431H826M798 475V459M754 431H770" stroke="#80f0a7" stroke-width="2"/>
+      <circle cx="798" cy="431" r="5" fill="#80f0a7" filter="url(#softGlow)"/>
+      <text x="798" y="420" class="room-title">RELAY</text>
+      <text x="798" y="448" class="room-title">NEXUS</text>
+      <text x="798" y="501" class="room-id mono">RN-00</text>
+    </g>
+
+    <!-- SECURITY ARRAY -->
+    <g class="ui">
+      <path class="room-dim" d="M746 159L768 137H805L828 160V204L806 228H767L744 204Z"/>
+      <path d="M785 149A33 33 0 0 1 817 181L785 181Z" fill="#ff5477" opacity=".12" class="radar"/>
+      <circle cx="785" cy="182" r="30" fill="none" stroke="#ff5477" stroke-opacity=".28"/>
+      <circle cx="785" cy="182" r="19" fill="none" stroke="#ff5477" stroke-opacity=".2"/>
+      <path d="M785 150V214M753 182H817" stroke="#ff5477" stroke-opacity=".18"/>
+      <path d="M785 165L802 182 785 199 768 182Z" fill="#ff5477" stroke="#ffd2dc" stroke-width="1.2" filter="url(#softGlow)"/>
+      <circle cx="785" cy="182" r="4" fill="#2d0610"/>
+      <text x="785" y="250" class="room-title" fill="#ff8198">SECURITY ARRAY</text>
+      <text x="785" y="265" class="room-id mono">DRONE ACTIVE</text>
+    </g>
+
+    <!-- AUXILIARY REACTOR -->
+    <g class="ui">
+      <path class="room powered" d="M749 665L776 650H823L852 667 861 707 840 743 800 757 760 742 739 708Z"/>
+      <circle cx="800" cy="705" r="39" fill="#07171e" stroke="#477f84" stroke-width="2"/>
+      <circle cx="800" cy="705" r="27" fill="none" stroke="#80f0a7" stroke-width="5" stroke-dasharray="75 25" class="repair-tick" filter="url(#softGlow)"/>
+      <circle cx="800" cy="705" r="14" fill="#163e3b" stroke="#80f0a7"/>
+      <path d="M794 691L808 702 800 718" fill="none" stroke="#eaffef" stroke-width="2"/>
+      <text x="800" y="778" class="room-title">AUXILIARY REACTOR</text>
+      <text x="800" y="793" class="room-id mono" fill="#80f0a7">REPAIR 1 / 2</text>
+
+      <!-- Wren token -->
+      <g transform="translate(842 697)" filter="url(#bigGlow)">
+        <circle r="17" fill="#061019" stroke="#ffad66" stroke-width="2"/>
+        <path d="M-9-6L0-12 10-6V6L0 12-9 6Z" fill="url(#wrenGrad)"/>
+        <circle r="3.5" fill="#713919"/>
+      </g>
+      <text x="842" y="727" class="room-id mono" fill="#ffad66">WREN</text>
+    </g>
+
+    <!-- CONSOLE ALPHA -->
+    <g class="ui">
+      <path class="room powered" d="M1002 291L1065 278 1097 303 1082 352 1015 363 989 337Z"/>
+      <path d="M1011 304L1059 294 1081 309 1072 337 1020 347 1003 331Z" fill="#0b202a" stroke="#5a8d96"/>
+      <path d="M1018 323H1069" stroke="#80f0a7" stroke-width="2" stroke-dasharray="6 5"/>
+      <circle cx="1072" cy="323" r="4" fill="#80f0a7" filter="url(#softGlow)"/>
+      <text x="1044" y="316" class="room-title">ALPHA</text>
+      <text x="1044" y="341" class="room-id mono" fill="#80f0a7">READY</text>
+      <path d="M1097 300A61 61 0 0 1 1084 355" fill="none" stroke="#80f0a7" stroke-width="2" stroke-dasharray="3 5"/>
+
+      <!-- Kite token -->
+      <g transform="translate(1011 279)" filter="url(#bigGlow)">
+        <circle r="17" fill="#061019" stroke="#58e6ff" stroke-width="2"/>
+        <path d="M0-12L11 10 0 6-11 10Z" fill="url(#kiteGrad)"/>
+        <circle cy="1" r="3" fill="#0b6175"/>
+      </g>
+      <text x="1011" y="261" class="room-id mono" fill="#58e6ff">KITE</text>
+      <circle cx="1011" cy="279" r="30" class="scan-arc"/>
+      <circle cx="1011" cy="279" r="42" class="scan-arc" style="animation-delay:.6s"/>
+    </g>
+
+    <!-- CONSOLE BETA -->
+    <g class="ui">
+      <path class="room powered" d="M1015 510L1082 521 1097 570 1065 595 1002 582 989 536Z"/>
+      <path d="M1020 526L1072 536 1081 564 1059 579 1011 569 1003 542Z" fill="#0b202a" stroke="#5a8d96"/>
+      <path d="M1018 551H1069" stroke="#80f0a7" stroke-width="2" stroke-dasharray="6 5"/>
+      <circle cx="1072" cy="551" r="4" fill="#80f0a7" filter="url(#softGlow)"/>
+      <text x="1044" y="546" class="room-title">BETA</text>
+      <text x="1044" y="570" class="room-id mono" fill="#80f0a7">READY</text>
+      <path d="M1084 508A61 61 0 0 1 1097 583" fill="none" stroke="#80f0a7" stroke-width="2" stroke-dasharray="3 5"/>
+    </g>
+
+    <!-- ARCHIVE GATE -->
+    <g class="ui">
+      <path class="room-dim" d="M1165 380H1218L1232 397V467L1218 484H1165L1152 467V397Z"/>
+      <path d="M1173 392H1192L1182 430 1192 472H1173L1163 430Z" fill="#15172b" stroke="#8a72cf"/>
+      <path d="M1211 392H1192L1202 430 1192 472H1211L1221 430Z" fill="#15172b" stroke="#8a72cf"/>
+      <path d="M1192 393V471" stroke="#b49aff" stroke-width="2" stroke-dasharray="2 5" class="blink" filter="url(#softGlow)"/>
+      <text x="1192" y="511" class="room-title" fill="#b49aff">ARCHIVE GATE</text>
+      <text x="1192" y="526" class="room-id mono">LOCKED</text>
+    </g>
+
+    <!-- FLIGHT ARCHIVE -->
+    <g class="ui">
+      <path d="M1322 382L1362 363H1408L1443 390V470L1407 498H1358L1321 477Z" fill="url(#archiveFill)" stroke="#6652a1" stroke-width="1.5"/>
+      <path d="M1338 395L1368 380H1399L1426 400V461L1400 480H1367L1338 465Z" fill="#0b1223" stroke="#9078d8" stroke-opacity=".58"/>
+      <path d="M1382 401L1403 416 1395 450 1382 460 1369 450 1361 416Z" fill="#b49aff" fill-opacity=".14" stroke="#b49aff" stroke-width="1.4"/>
+      <path d="M1373 426H1391M1382 417V444" stroke="#dacfff" stroke-width="1.4" opacity=".8"/>
+      <text x="1382" y="521" class="room-title" fill="#c6b7f7">FLIGHT ARCHIVE</text>
+      <text x="1382" y="536" class="room-id mono">RECORDER SECURED</text>
+    </g>
+
+    <!-- Message flight -->
+    <path class="message-line" d="M1011 279C945 234 890 214 821 191"/>
+    <g transform="translate(899 223)" filter="url(#bigGlow)">
+      <path d="M-8-5H7L12 0 7 5H-8L-12 0Z" fill="#58e6ff"/>
+      <circle r="2" fill="#f5feff"/>
+    </g>
+    <text x="915" y="208" class="room-id mono" fill="#58e6ff">MSG / ETA T+1</text>
+
+    <!-- Lock crossbar on archive conduit -->
+    <g stroke="#b49aff" stroke-width="2" opacity=".65">
+      <path d="M1267 421L1281 443M1281 421L1267 443"/>
+    </g>
+  </g>
+
+  <!-- Right context rail -->
+  <g class="ui" filter="url(#panelShadow)">
+    <path class="panel-edge" d="M1330 91H1575V770H1330L1318 758V103Z"/>
+    <text x="1351" y="123" class="label">LIVE CONTEXT</text>
+    <g transform="translate(1351 143)">
+      <rect width="202" height="62" rx="6" fill="#091a27" stroke="#2b5669"/>
+      <text x="14" y="21" class="label">SELECTED AGENT</text>
+      <path d="M16 37L26 25 36 37 26 49Z" fill="url(#kiteGrad)"/>
+      <text x="48" y="40" font-size="15" font-weight="760">KITE</text>
+      <text x="157" y="39" class="mono" font-size="12" fill="#80f0a7">2 HP</text>
+    </g>
+
+    <text x="1351" y="231" class="label">DECLARED INTENT</text>
+    <path d="M1351 244H1553V308H1351Z" fill="#091824" stroke="#22495b"/>
+    <text x="1364" y="265" class="small">
+      <tspan x="1364">Alpha is ready. Holding position</tspan>
+      <tspan x="1364" dy="17">until Wren confirms power, then</tspan>
+      <tspan x="1364" dy="17">propose sync turn with margin.</tspan>
+    </text>
+
+    <text x="1351" y="338" class="label">DELAYED COMMS · 4 / 6</text>
+    <g transform="translate(1351 352)">
+      <path d="M0 0H202V58H0Z" fill="#0a1b27" stroke="#275568"/>
+      <circle cx="14" cy="17" r="4" fill="#ffad66"/>
+      <text x="26" y="20" class="small" fill="#d5e8ec">WREN · delivered T06</text>
+      <text x="14" y="42" class="small">“Starting two-turn repair now.”</text>
+    </g>
+    <g transform="translate(1351 420)">
+      <path d="M0 0H202V58H0Z" fill="#0a1b27" stroke="#31667a"/>
+      <circle cx="14" cy="17" r="4" fill="#58e6ff"/>
+      <text x="26" y="20" class="small" fill="#d5e8ec">KITE · in flight</text>
+      <text x="14" y="42" class="small">“Alpha ready. Suggest sync T09.”</text>
+    </g>
+
+    <text x="1351" y="511" class="label">OBJECTIVE CONTRACTS</text>
+    <g transform="translate(1351 528)" class="small">
+      <circle cx="8" cy="0" r="6" fill="#80f0a7"/>
+      <path d="M5 0L7 3 12-3" fill="none" stroke="#082016" stroke-width="2"/>
+      <text x="23" y="4">Reach reactor</text>
+
+      <circle cx="8" cy="31" r="6" fill="none" stroke="#ffd166" stroke-width="2"/>
+      <path d="M8 25V37" stroke="#ffd166" stroke-width="2"/>
+      <text x="23" y="35">Restore power · 1 / 2</text>
+
+      <circle cx="8" cy="62" r="6" fill="none" stroke="#536f7b" stroke-width="2"/>
+      <text x="23" y="66" fill="#7896a2">Synchronize consoles</text>
+
+      <circle cx="8" cy="93" r="6" fill="none" stroke="#536f7b" stroke-width="2"/>
+      <text x="23" y="97" fill="#7896a2">Recover recorder</text>
+
+      <circle cx="8" cy="124" r="6" fill="none" stroke="#536f7b" stroke-width="2"/>
+      <text x="23" y="128" fill="#7896a2">Extract team</text>
+    </g>
+
+    <path d="M1351 678H1553" stroke="#24475a"/>
+    <text x="1351" y="704" class="label">PLAYBACK</text>
+    <g transform="translate(1351 718)">
+      <rect width="36" height="30" rx="4" fill="#102735" stroke="#3f7587"/>
+      <path d="M15 8L27 15 15 22Z" fill="#d8edf2"/>
+      <rect x="46" width="46" height="30" rx="4" fill="#0b1b27" stroke="#274c5d"/>
+      <text x="69" y="20" class="small mono" text-anchor="middle">1×</text>
+      <rect x="102" width="100" height="30" rx="4" fill="#0b1b27" stroke="#274c5d"/>
+      <text x="152" y="20" class="label" text-anchor="middle">INSPECT</text>
+    </g>
+  </g>
+
+  <!-- Bottom objective / event timeline -->
+  <g class="ui" filter="url(#panelShadow)">
+    <path class="panel-edge" d="M25 792H1575V876H25Z"/>
+    <text x="48" y="819" class="label">TURN TRACE</text>
+    <path d="M147 835H1518" stroke="#24495a" stroke-width="2"/>
+    <g class="mono" font-size="9" text-anchor="middle">
+      <g transform="translate(184 835)">
+        <circle r="8" fill="#80f0a7"/>
+        <text y="25" fill="#7896a2">01</text>
+      </g>
+      <g transform="translate(277 835)">
+        <circle r="8" fill="#80f0a7"/>
+        <text y="25" fill="#7896a2">02</text>
+      </g>
+      <g transform="translate(370 835)">
+        <circle r="8" fill="#80f0a7"/>
+        <text y="25" fill="#7896a2">03</text>
+      </g>
+      <g transform="translate(463 835)">
+        <circle r="8" fill="#80f0a7"/>
+        <text y="25" fill="#7896a2">04</text>
+      </g>
+      <g transform="translate(556 835)">
+        <circle r="8" fill="#58e6ff"/>
+        <text y="25" fill="#7896a2">05</text>
+      </g>
+      <g transform="translate(649 835)">
+        <circle r="8" fill="#ffad66"/>
+        <text y="25" fill="#7896a2">06</text>
+      </g>
+      <g transform="translate(742 835)">
+        <circle r="13" fill="#07121b" stroke="#f5feff" stroke-width="2" filter="url(#softGlow)"/>
+        <circle r="5" fill="#f5feff"/>
+        <text y="27" fill="#f5feff">07</text>
+      </g>
+      <g transform="translate(835 835)">
+        <circle r="6" fill="#172f3e" stroke="#42677a"/>
+        <text y="25" fill="#536f7b">08</text>
+      </g>
+      <g transform="translate(928 835)">
+        <circle r="6" fill="#172f3e" stroke="#42677a"/>
+        <text y="25" fill="#536f7b">09</text>
+      </g>
+      <g transform="translate(1021 835)">
+        <circle r="6" fill="#172f3e" stroke="#42677a"/>
+        <text y="25" fill="#536f7b">10</text>
+      </g>
+      <g transform="translate(1114 835)">
+        <circle r="6" fill="#172f3e" stroke="#42677a"/>
+        <text y="25" fill="#536f7b">11</text>
+      </g>
+      <g transform="translate(1207 835)">
+        <circle r="6" fill="#172f3e" stroke="#42677a"/>
+        <text y="25" fill="#536f7b">12</text>
+      </g>
+      <g transform="translate(1300 835)">
+        <circle r="6" fill="#172f3e" stroke="#42677a"/>
+        <text y="25" fill="#536f7b">13</text>
+      </g>
+      <g transform="translate(1393 835)">
+        <circle r="6" fill="#172f3e" stroke="#42677a"/>
+        <text y="25" fill="#536f7b">14+</text>
+      </g>
+    </g>
+    <g transform="translate(1120 806)">
+      <rect width="398" height="27" rx="4" fill="#0a1b27" stroke="#2e5869"/>
+      <circle cx="15" cy="13.5" r="4" fill="#ffad66"/>
+      <text x="28" y="18" class="small">Wren continued Auxiliary Reactor repair</text>
+      <text x="378" y="18" class="mono" font-size="9" text-anchor="end" fill="#80f0a7">VALID</text>
+    </g>
+  </g>
+</svg>

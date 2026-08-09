@@ -1,0 +1,27 @@
+# .NET
+**/bin/
+**/obj/
+artifacts/
+TestResults/
+*.user
+*.suo
+.vs/
+
+# Web
+**/node_modules/
+src/DirectiveDrift.Web/dist/
+src/DirectiveDrift.Web/coverage/
+
+# Local configuration and data
+.env
+.env.*
+!.env.example
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store

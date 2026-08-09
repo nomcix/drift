@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "dependencies": {
+    "net10.0": {
+      "directivedrift.application": {
+        "type": "Project",
+        "dependencies": {
+          "DirectiveDrift.Core": "[1.0.0, )"
+        }
+      },
+      "directivedrift.core": {
+        "type": "Project"
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1",
+  "actionId": "move:junction",
+  "message": {
+    "toAgentId": "wren",
+    "text": "East service link is contaminated. Use the west route."
+  },
+  "rationale": "The sensed hazard makes the east link unsafe; moving to the nexus also advances my console role.",
+  "memory": "East service link has radiation. Warned Wren. I am routing toward Alpha and will propose a sync turn after power confirmation."
+}
