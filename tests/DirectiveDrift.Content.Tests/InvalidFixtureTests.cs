@@ -26,6 +26,12 @@ public sealed class InvalidFixtureTests
                 "decision",
                 ValidationErrorCodes.SchemaViolation
             },
+            {
+                "tests/DirectiveDrift.Content.Tests/Fixtures/Invalid/empty-rationale.agent-decision.json",
+                "contracts/agent-decision.schema.json",
+                "decision",
+                ValidationErrorCodes.SchemaViolation
+            },
         };
 
     [Theory]
