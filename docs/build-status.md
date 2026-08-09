@@ -8,7 +8,26 @@ Last updated: 2026-08-09
 | P1 — Contracts and content boundary | Complete | Strict schemas, DTOs, loaders, stable validation errors, and content CLI pass. |
 | P2 — Deterministic core simulator | Complete | Core rules, PCG32, observation, determinism, replay, terminal, and architecture tests pass. |
 | P3 — Cold Start materializer, solver, and evaluation harness | Complete | Eleven fixed variants have ≤17-turn interchangeable-loadout and no-damage proofs; three named policy families and scripted onboarding fail/success gates pass. |
+| P3.5 — Bounded roster extensibility | Complete | Build JSON and C# use an opaque `AgentId`-keyed two-entry map; mission-relative validation requires the exact authored roster without identity-name branching. |
 | P4+ | Not started | Application persistence, HTTP run advancement, live providers, and player certification UX remain deferred. |
+
+## P3.5 implementation status
+
+Build contract version `1` remains limited to exactly two active autonomous
+agents. The JSON wire shape is an object keyed by opaque mission-authored agent
+IDs, and the C# boundary now preserves those keys as `AgentId` values instead
+of reverting to strings. Mission-relative validation independently enforces
+the two-entry invariant and exact roster equality before materialization.
+
+Agent labels, capabilities, module definitions, and the briefing-card
+catalogue remain mission content. Production C# contains no literal `kite` or
+`wren` identity branches; Cold Start JSON fixtures and reference prose retain
+their authored names. The reversed key order in the generic build example
+also demonstrates that JSON property order has no role semantics.
+
+This is a pre-persistence contract correction. Schema version `1` and the JSON
+wire representation are unchanged, no database migration exists, and no
+generated TypeScript client is present to regenerate.
 
 ## P3 implementation status
 
@@ -59,13 +78,13 @@ client exists yet, so there is no generated TypeScript impact.
 Run on 2026-08-09:
 
 - `dotnet build` — passed with 0 warnings and 0 errors.
-- `dotnet test` — 109 passed, 0 failed, 0 skipped.
+- `dotnet test` — 112 passed, 0 failed, 0 skipped.
 - `npm ci --prefix src/DirectiveDrift.Web` — passed.
 - `npm run lint --prefix src/DirectiveDrift.Web` — passed with 0 warnings.
 - `npm run test --prefix src/DirectiveDrift.Web` — 1 passed.
 - `npm run build --prefix src/DirectiveDrift.Web` — passed.
 - `docker build .` — passed; image
-  `sha256:214b2c6d303aa8ed33c64c35bc16420731b46e88d57dc6410d0733e9d3bae3c1`.
+  `sha256:8e1251050f25972c00cbd3c3ba4b25593c0e3b2ef8ceff04f63a2c7f6a0589c2`.
 - Cold Start content CLI — passed; content `2.0.1`, 11 variants proven.
 - Generic scripted tutorial — failed as intended with
   `unknown-required-contract` and 0 decision fallbacks.

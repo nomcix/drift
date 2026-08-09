@@ -96,7 +96,7 @@ public static class ScriptedEvaluationRunner
             .Where(entry => !entry.Value.BriefingCardIds.Contains(
                 SyncCardId.Value,
                 StringComparer.Ordinal))
-            .Select(entry => new AgentId(entry.Key))
+            .Select(entry => entry.Key)
             .ToHashSet();
         var scriptedTurns = ApplyKnowledgeBoundary(solved.Turns, missingSyncAgents, definition);
         var execution = Execute(definition, scriptedTurns);

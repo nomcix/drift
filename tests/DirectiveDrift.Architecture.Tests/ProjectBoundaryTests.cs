@@ -169,6 +169,34 @@ public sealed class ProjectBoundaryTests
         }
     }
 
+    [Fact]
+    public void ProductionSourceDoesNotBranchOnColdStartAgentIds()
+    {
+        var sourceDirectory = Path.Combine(FindRepositoryRoot(), "src");
+        var forbiddenIdentityLiterals = new[]
+        {
+            "\"kite\"",
+            "\"wren\"",
+            "\"Kite\"",
+            "\"Wren\"",
+        };
+        var violations = Directory
+            .EnumerateFiles(sourceDirectory, "*.cs", SearchOption.AllDirectories)
+            .Where(path => !path.Split(Path.DirectorySeparatorChar).Contains("obj", StringComparer.Ordinal))
+            .SelectMany(path =>
+            {
+                var source = File.ReadAllText(path);
+
+                return forbiddenIdentityLiterals
+                    .Where(source.Contains)
+                    .Select(identity =>
+                        $"{Path.GetRelativePath(sourceDirectory, path)} contains {identity}.");
+            })
+            .ToArray();
+
+        Assert.Empty(violations);
+    }
+
     private static string[] ReadProjectReferences(string projectPath)
     {
         var project = XDocument.Load(projectPath);

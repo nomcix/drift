@@ -1,3 +1,5 @@
+using DirectiveDrift.Core.Model;
+
 namespace DirectiveDrift.Content.Authoring;
 
 public sealed record BuildDocument(
@@ -7,7 +9,7 @@ public sealed record BuildDocument(
     string Name,
     int Version,
     string SharedDoctrine,
-    IReadOnlyDictionary<string, AgentBuildDocument> Agents,
+    IReadOnlyDictionary<AgentId, AgentBuildDocument> Agents,
     string? Hypothesis);
 
 public sealed record AgentBuildDocument(

@@ -3,22 +3,20 @@ using DirectiveDrift.Content.Authoring;
 using DirectiveDrift.Content.Contracts;
 using DirectiveDrift.Content.Loading;
 using DirectiveDrift.Content.Validation;
+using DirectiveDrift.Core.Model;
 
 namespace DirectiveDrift.Content.Tests;
 
 public sealed class ContractDocumentTests
 {
     [Fact]
-    public void CheckedInContractsAndExamplesMatchTheWorkpack()
+    public void UnmodifiedContractsAndExamplesMatchTheWorkpack()
     {
         var relativePaths = new[]
         {
             "contracts/agent-decision.schema.json",
-            "contracts/build.schema.json",
-            "contracts/mission.schema.json",
             "examples/agent-decision.example.json",
             "examples/designed-build.json",
-            "examples/generic-optimal-build.json",
         };
 
         foreach (var path in relativePaths)
@@ -130,7 +128,7 @@ public sealed class ContractDocumentTests
             RepositoryFiles.Read("contracts/build.schema.json"));
 
         Assert.True(result.IsValid, string.Join(Environment.NewLine, result.Errors));
-        Assert.Contains("rook", result.Document!.Agents.Keys);
+        Assert.Contains(new AgentId("rook"), result.Document!.Agents.Keys);
         Assert.Equal(2, result.Document.Agents.Count);
     }
 

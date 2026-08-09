@@ -53,9 +53,9 @@ public static class ColdStartMissionMaterializer
         ArgumentNullException.ThrowIfNull(build);
 
         return build.Agents
-            .OrderBy(entry => entry.Key, StringComparer.Ordinal)
+            .OrderBy(entry => entry.Key.Value, StringComparer.Ordinal)
             .ToDictionary(
-                entry => new AgentId(entry.Key),
+                entry => entry.Key,
                 entry => MapModule(mission.Modules[new ModuleId(entry.Value.ModuleId)]));
     }
 
