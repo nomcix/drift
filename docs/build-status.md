@@ -10,7 +10,67 @@ Last updated: 2026-08-09
 | P3 — Cold Start materializer, solver, and evaluation harness | Complete | Eleven fixed variants have ≤17-turn interchangeable-loadout and no-damage proofs; three named policy families and scripted onboarding fail/success gates pass. |
 | P3.5 — Bounded roster extensibility | Complete | Build JSON and C# use an opaque `AgentId`-keyed two-entry map; mission-relative validation requires the exact authored roster without identity-name branching. |
 | P4 — Application, persistence, and API spine | Complete | A scripted run completes through durable HTTP turn operations; SQLite migration/WAL, ownership, idempotency, lease recovery, atomic commits, pagination, replay, OpenAPI, and generated TypeScript client gates pass. |
-| P5+ | Not started | Briefing workbench, SVG presentation, live providers, and player certification UX remain deferred. |
+| P5 — Web shell and briefing workbench | Complete | Fixture-backed mission briefing, objective chain, accepted opaque two-agent roster, four-slot loadouts, modules, overlap accounting, prediction, keyboard controls, and schema-shaped save pass 1280/1024 presentation and component gates. |
+| P6 — SVG map and presentation reducer | Complete | Semantic station SVG, trusted silhouettes, typed presentation fixtures, canonical-event reducer, ordered playback, gated lenses, accessible state, responsive context drawer, and powered/unpowered visual gates pass. |
+| P7+ | Not started | Scripted browser-to-server game, live providers, practice/certification, comparison, and launch hardening remain deferred. |
+
+## P6 implementation status
+
+P6 adds a fixture-backed station operations screen without connecting the web
+client to simulation or server state. Mission presentation coordinates and
+trusted shape names live only in the web fixture. Canonical showcase events
+contain opaque IDs and accepted facts; a pure reducer applies them in sequence
+to stable presentation state. The animated queue and resolve-instantly path use
+the same reducer and produce identical final state.
+
+The responsive semantic SVG has eleven function-shaped rooms, twelve routed
+double-line conduits, non-color Kite/Wren identity, radiation and drone threat
+cues, objective rings, archive state, and the whole-station power transition.
+Command, Kite, Wren, and post-run Truth lenses enforce fixture discovery rules;
+Truth remains unavailable while the replay state is live. Rooms expose labels,
+topological arrow-key focus, inspection state, and an adjacent structured state
+list. Pause, 1x/2x speed, instant, reset, readable, and reduced-motion paths are
+present. At the 1024 breakpoint the context rail becomes an operable drawer.
+
+### P6 schema, migration, and telemetry impact
+
+- No JSON Schema, C# boundary, OpenAPI, generated client, persistence, or
+  telemetry contract changed.
+- No simulation rule is implemented in TypeScript. Presentation coordinates
+  remain in `src/DirectiveDrift.Web/src/fixtures/stationShowcase.ts` and do not
+  appear in canonical showcase events or any C# rule package.
+- P5 continues to materialize the accepted ADR 0001 opaque two-entry roster;
+  P6 consumes its authored Kite/Wren fixture labels only for this mission.
+
+### P6 acceptance evidence
+
+Run on 2026-08-09:
+
+- `dotnet build --no-restore --disable-build-servers --verbosity minimal -m:1`
+  — passed with 0 warnings and 0 errors.
+- `dotnet test --no-build --no-restore --disable-build-servers --verbosity minimal -m:1`
+  — 119 passed, 0 failed, 0 skipped.
+- `npm run lint --prefix src/DirectiveDrift.Web` — passed with 0 warnings.
+- `npm run test --prefix src/DirectiveDrift.Web` — 18 passed, 0 failed.
+- `npm run build --prefix src/DirectiveDrift.Web` — passed; strict TypeScript
+  and Vite production build completed.
+- In-app browser checks at 1280x720 and 1024x768 passed for unpowered, powered,
+  instant completion, responsive context drawer, and accessible DOM state with
+  no console warnings or errors.
+- The map uses 144 SVG nodes and 322 total page nodes. The active animation
+  surface is 4 elements at rest and 19 after power restoration, below the
+  specification caps of 900 DOM nodes and 25 simultaneous animated elements.
+
+The browser verification surface did not expose frame-timing APIs, so the 60
+fps target is supported by the bounded node/animation profile and transform,
+opacity, and stroke-based effects rather than a recorded numeric FPS trace.
+No visual acceptance criterion was weakened.
+
+### P6 deliberate omissions
+
+- No server integration, autonomous decision loop, API polling, provider,
+  certification flow, or P7 work was added.
+- No raster art, canvas, WebGL, audio, or new framework dependency was added.
 
 ## P4 implementation status
 

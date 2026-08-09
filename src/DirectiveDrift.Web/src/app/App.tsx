@@ -9,6 +9,7 @@ import {
   validateDraft,
 } from "../workbench/buildModel";
 import type { AgentBuild, BuildDocument, BuildDraft } from "../workbench/buildModel";
+import { RunScreen } from "../presentation/RunScreen";
 
 const savedBuildKey = "directive-drift:p5-fixture-build";
 
@@ -19,10 +20,13 @@ function saveFixtureBuild(build: BuildDocument) {
 }
 
 export function App({ onSave = saveFixtureBuild }: { readonly onSave?: SaveBuild }) {
+  const [screen, setScreen] = useState<"workbench" | "run">("workbench");
   const [draft, setDraft] = useState<BuildDraft>(initialDraft);
   const [savedBuild, setSavedBuild] = useState<BuildDocument | null>(null);
   const summary = useMemo(() => knowledgeSummary(draft), [draft]);
   const errors = useMemo(() => validateDraft(draft), [draft]);
+
+  if (screen === "run") return <RunScreen onReturn={() => { setScreen("workbench"); }} />;
 
   function updateAgent(agentId: string, update: (agent: AgentBuild) => AgentBuild) {
     setDraft((current) => {
@@ -84,7 +88,7 @@ export function App({ onSave = saveFixtureBuild }: { readonly onSave?: SaveBuild
           <a href="#briefing">01 Mission</a>
           <a href="#workbench" aria-current="step">02 Briefing</a>
           <a href="#prediction">03 Predict</a>
-          <span aria-disabled="true">04 Execute</span>
+          <button type="button" onClick={() => { setScreen("run"); }}>04 Execute</button>
         </nav>
         <div className="build-version"><span>Build state</span><strong>Draft · v1</strong></div>
       </header>
@@ -178,6 +182,7 @@ export function App({ onSave = saveFixtureBuild }: { readonly onSave?: SaveBuild
               {errors.length === 0 ? <><strong>Ready to save</strong><span>Roster and slot contract valid</span></> : <><strong>{errors.length} issue{errors.length === 1 ? "" : "s"}</strong><span>{errors[0]}</span></>}
             </div>
             <button className="save-button" type="button" disabled={errors.length > 0} onClick={submitBuild}>Save build <span aria-hidden="true">→</span></button>
+            <button className="run-preview-button" type="button" onClick={() => { setScreen("run"); }}>Open map showcase</button>
           </footer>
           {savedBuild === null ? null : <p className="save-confirmation" role="status">Saved <strong>{savedBuild.name}</strong> as schema v{savedBuild.schemaVersion} fixture build <code>{savedBuild.buildId}</code>.</p>}
         </section>

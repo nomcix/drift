@@ -79,4 +79,15 @@ describe("P5 briefing workbench", () => {
     expect(saved?.agents["wren"]?.briefingCardIds).toHaveLength(4);
     expect(screen.getByText("Saved", { exact: false })).toBeTruthy();
   });
+
+  it("opens the P6 map showcase without changing the P5 build contract", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Open map showcase" }));
+    expect(screen.getByRole("heading", { level: 1, name: "Station operations map" })).toBeTruthy();
+    expect(screen.getByRole("img", { name: "Cold Start station operations map" })).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Return to briefing workbench" }));
+    expect(screen.getByRole("heading", { level: 1, name: "Cold Start" })).toBeTruthy();
+  });
 });
