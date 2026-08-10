@@ -18,11 +18,57 @@ builder.Services
 builder.Services.AddOpenApi("v1");
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton(runtimeCatalog);
+builder.Services.AddSingleton<IAgentTurnContextFactory>(
+    _ => new AgentTurnContextFactory(runtimeCatalog.Mission));
 builder.Services.AddDirectiveDriftPersistence(
     _ => builder.Configuration.GetConnectionString("DirectiveDrift")
         ?? $"Data Source={Path.Combine(builder.Environment.ContentRootPath, "directive-drift.db")}");
-builder.Services.AddSingleton<IAgentDecisionProvider, ScriptedDecisionProvider>();
-builder.Services.AddSingleton<IUsageReservationService, ScriptedUsageReservationService>();
+builder.Services.AddHttpClient(
+    "openai",
+    client => client.BaseAddress = new Uri(
+        builder.Configuration["Provider:BaseUrl"] ?? "https://api.openai.com/"));
+builder.Services.AddSingleton<IAgentDecisionProvider>(serviceProvider =>
+{
+    var mode = builder.Configuration["Provider:Mode"] ?? "scripted";
+    if (string.Equals(mode, "scripted", StringComparison.OrdinalIgnoreCase))
+    {
+        return new ScriptedDecisionProvider();
+    }
+
+    if (string.Equals(mode, "fake", StringComparison.OrdinalIgnoreCase))
+    {
+        return new StructuredDecisionProvider(
+            ProviderProfiles.Fake,
+            new FakeProviderTransport());
+    }
+
+    if (!string.Equals(mode, "live", StringComparison.OrdinalIgnoreCase))
+    {
+        throw new InvalidOperationException($"Unknown provider mode '{mode}'.");
+    }
+
+    var apiKey = builder.Configuration["Provider:ApiKey"];
+    if (string.IsNullOrWhiteSpace(apiKey))
+    {
+        throw new InvalidOperationException(
+            "Provider:ApiKey is required when Provider:Mode is live.");
+    }
+
+    var configured = ProviderProfiles.OpenAi with
+    {
+        Model = builder.Configuration["Provider:Model"] ?? ProviderProfiles.OpenAi.Model,
+        RunCostCapMicros = builder.Configuration.GetValue<int?>("Provider:RunCostCapMicros")
+            ?? ProviderProfiles.OpenAi.RunCostCapMicros,
+        GuestDailyCostCapMicros = builder.Configuration.GetValue<int?>("Provider:GuestDailyCostCapMicros")
+            ?? ProviderProfiles.OpenAi.GuestDailyCostCapMicros,
+        DeploymentDailyCostCapMicros = builder.Configuration.GetValue<int?>("Provider:DeploymentDailyCostCapMicros")
+            ?? ProviderProfiles.OpenAi.DeploymentDailyCostCapMicros,
+    };
+    var client = serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("openai");
+    return new StructuredDecisionProvider(
+        configured,
+        new OpenAiResponsesTransport(client, apiKey));
+});
 builder.Services.AddSingleton<TurnOperationProcessor>();
 if (builder.Configuration.GetValue("TurnWorker:Enabled", true))
 {

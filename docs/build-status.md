@@ -13,7 +13,91 @@ Last updated: 2026-08-09
 | P5 — Web shell and briefing workbench | Complete | Fixture-backed mission briefing, objective chain, accepted opaque two-agent roster, four-slot loadouts, modules, overlap accounting, prediction, keyboard controls, and schema-shaped save pass 1280/1024 presentation and component gates. |
 | P6 — SVG map and presentation reducer | Complete | Semantic station SVG, trusted silhouettes, typed presentation fixtures, canonical-event reducer, ordered playback, gated lenses, accessible state, responsive context drawer, and powered/unpowered visual gates pass. |
 | P7 — Scripted end-to-end game | Complete | Generated-client guest bootstrap, immutable build revisions, durable operation polling/resume, paged canonical events, guided fail/revise/succeed onboarding, replay truth/diagnostics, and Playwright smoke gates pass. |
-| P8+ | Not started | Live providers, practice/certification, comparison, and launch hardening remain deferred. |
+| P8 — AI runtime, fake provider, and one live adapter | Complete | Private context/prompt assembly, strict decision validation/repair/fallback, fake failure modes, pinned OpenAI Responses adapter, concurrent calls, pre-dispatch SQLite budgets, durable checkpoints, usage/cost diagnostics, and leakage/cap/restart gates pass. |
+| P9+ | Not started | Practice/certification, comparison, sharing, and launch hardening remain deferred. |
+
+## P8 implementation status
+
+P8 adds provider-neutral `AgentTurnContext` assembly from the immutable pre-turn
+snapshot and immutable build version. Each serialized request contains one
+agent's identity, ordered assigned cards, capabilities/module, doctrine and
+private role order, exact private observation, delivered messages, replacement
+memory, engine-generated legal action IDs, and response limits. The actual
+OpenAI request serializer is marker-tested against complete mission text,
+unassigned cards, partner configuration/identity, and hidden variant values.
+
+The versioned prompt assembler emits stable context/template hashes and labels
+all player-authored content as untrusted mission data. Structured decisions are
+validated for byte/shape/schema/version/action membership/recipient/text/memory
+limits. Only malformed or structurally invalid output receives one repair with
+the identical context. Transport, timeout, cap, and final validation failures
+produce a deterministic engine-visible wait fallback that preserves memory.
+Fake transport covers valid, malformed, missing/extra field, illegal action,
+wrong recipient, oversize, timeout, latency, and transport-error paths.
+
+The official live adapter uses the OpenAI Responses API with strict
+`text.format` JSON Schema, no tools, `store=false`, a bounded response stream,
+and pinned profile `openai-gpt-5-mini-2025-08-07-v1`. Scripted remains the
+secret-free default; fake and live modes are server configuration only. Provider
+keys never enter context, persistence, OpenAPI, or browser responses.
+
+SQLite reserves the maximum projected two-agent/retry amount before concurrent
+dispatch and enforces operation, run, 40-attempt run, guest-day,
+deployment-day, and concurrency caps. Each finalized provider result stores
+the exact private context, prompt/context hashes, sanitized per-attempt
+diagnostics, usage/cost/latency, and profile/state integrity fields. Lease
+recovery reuses a matching checkpoint, while failed abandoned operations stop
+counting stale reservations. Turn state, canonical events, resolved decisions,
+and usage settlement still commit atomically.
+
+### P8 schema, migration, and telemetry impact
+
+- Authored JSON Schemas, build contract version `1`, accepted ADR 0001 roster,
+  HTTP/OpenAPI shapes, and generated TypeScript files are unchanged.
+- EF migration `20260810010923_P8AiRuntime` advances persistence metadata to
+  version `2` and adds `ProviderDecisionCheckpoints`; migration details are in
+  `docs/migrations/0002-p8-ai-runtime.md`.
+- The existing usage ledger now records durable reservations before dispatch
+  and actual settlement in the authoritative turn transaction. Stored provider
+  checkpoints supply internal context/profile/attempt/token/cost/latency
+  diagnostics; no raw wire logs, auth headers, or keys are retained.
+- `docs/p8-cost-report.md` records the pinned price table and bounded projected
+  operation/run costs.
+
+### P8 acceptance evidence
+
+Run on 2026-08-09:
+
+- `dotnet build --no-restore --disable-build-servers --verbosity minimal -m:1`
+  — passed with 0 warnings and 0 errors.
+- `dotnet ef migrations has-pending-model-changes ... --no-build` — passed; no
+  model changes remain outside migrations.
+- `dotnet test --no-build --no-restore --disable-build-servers --verbosity minimal -m:1`
+  — 138 passed, 0 failed, 0 skipped.
+- P8 focused suites — Application 3 passed, AI 14 passed, Persistence 8 passed,
+  API 6 passed, and Architecture 7 passed. These include concurrent same-state
+  dispatch, zero-call checkpoint resume, actual-serializer leakage markers,
+  all fake failure categories, adapter smoke, cap-before-dispatch, and durable
+  reservation/checkpoint tests.
+- `./scripts/generate-api-client.sh` — passed with no generated-client drift.
+- `npm run lint --prefix src/DirectiveDrift.Web` — passed with 0 warnings.
+- `npm run test --prefix src/DirectiveDrift.Web` — 22 passed, 0 failed.
+- `npm run build --prefix src/DirectiveDrift.Web` — passed.
+- `npm run test:e2e --prefix src/DirectiveDrift.Web` — both Chromium P7
+  fail/revise/succeed/replay and refresh/resume regression scenarios passed.
+
+The live-adapter smoke uses a bounded stubbed Responses endpoint in default CI.
+No external provider or credential is required by a pull request; a real-model
+behavior/cost smoke remains an explicitly configured private-live operation as
+required by the QA test-mode matrix.
+
+### P8 deliberate omissions
+
+- No P9 practice/certification/comparison/sharing behavior was added.
+- No provider-selection UI, BYOK, second live provider, fine-tuning, tools,
+  agent framework, or TypeScript rule resolution was added.
+- No generic/designed 40-run live evaluation was started; that remains the P10
+  public-prototype evaluation gate.
 
 ## P7 implementation status
 

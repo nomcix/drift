@@ -16,7 +16,7 @@ namespace DirectiveDrift.Persistence;
 
 public sealed class EfGameRepository(
     IDbContextFactory<GameDbContext> contextFactory,
-    TimeProvider timeProvider) : IGameRepository
+    TimeProvider timeProvider) : IGameRepository, IDecisionCheckpointStore
 {
     private static readonly JsonSerializerOptions StorageJson = CreateStorageJson();
 
@@ -401,6 +401,9 @@ public sealed class EfGameRepository(
         var snapshot = await database.RunSnapshots.AsNoTracking().SingleAsync(
             entity => entity.RunId == run.Id && entity.Turn == operation.Turn - 1,
             cancellationToken);
+        var build = await database.BuildVersions.AsNoTracking().SingleAsync(
+            entity => entity.BuildId == run.BuildId && entity.Version == run.BuildVersion,
+            cancellationToken);
         var plan = DeserializePlan(run.ScriptedPlanJson);
         if (!plan.TryGetValue(operation.Turn, out var actions))
         {
@@ -414,7 +417,9 @@ public sealed class EfGameRepository(
             new RunId(run.Id),
             operation.Turn,
             CanonicalStateSerializer.Deserialize(snapshot.StateJson),
-            actions);
+            actions,
+            build.CanonicalJson,
+            run.ProviderProfileId);
     }
 
     public async Task CompleteTurnAsync(
@@ -463,23 +468,16 @@ public sealed class EfGameRepository(
                 DecisionJson = JsonSerializer.Serialize(decision, StorageJson),
             }));
         database.DomainEvents.AddRange(result.Events.Select(value => ToEventEntity(run.Id, value)));
-        database.UsageLedger.Add(
-            new UsageLedgerEntity
-            {
-                Id = settlement.ReservationId,
-                OwnerId = operation.OwnerId,
-                RunId = run.Id,
-                OperationId = operation.OperationId,
-                ReservedInputTokens = 0,
-                ReservedOutputTokens = 0,
-                ReservedCostMicros = 0,
-                ActualInputTokens = settlement.InputTokens,
-                ActualOutputTokens = settlement.OutputTokens,
-                ActualCostMicros = settlement.CostMicros,
-                Status = "settled",
-                CreatedAt = now,
-                UpdatedAt = now,
-            });
+        var usage = await database.UsageLedger.SingleAsync(
+            entity => entity.Id == settlement.ReservationId
+                && entity.OperationId == operation.OperationId
+                && entity.Status == "reserved",
+            cancellationToken);
+        usage.ActualInputTokens = settlement.InputTokens;
+        usage.ActualOutputTokens = settlement.OutputTokens;
+        usage.ActualCostMicros = settlement.CostMicros;
+        usage.Status = "settled";
+        usage.UpdatedAt = now;
         await database.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
@@ -567,6 +565,73 @@ public sealed class EfGameRepository(
             CanonicalStateSerializer.Deserialize(initial.StateJson),
             eventsJson.Select(DeserializeEvent).ToImmutableArray(),
             decisionsJson.Select(DeserializeDecision).ToImmutableArray());
+    }
+
+    public async Task<ProviderDecisionResult?> GetAcceptedAsync(
+        string operationId,
+        AgentId agentId,
+        string providerProfileId,
+        string preDecisionStateHash,
+        CancellationToken cancellationToken)
+    {
+        await using var database = await contextFactory.CreateDbContextAsync(cancellationToken);
+        var json = await database.ProviderDecisionCheckpoints
+            .AsNoTracking()
+            .Where(value => value.OperationId == operationId
+                && value.AgentId == agentId.Value
+                && value.ProviderProfileId == providerProfileId
+                && value.PreDecisionStateHash == preDecisionStateHash)
+            .Select(value => value.ResultJson)
+            .SingleOrDefaultAsync(cancellationToken);
+        return json is null
+            ? null
+            : JsonSerializer.Deserialize<ProviderDecisionResult>(json, StorageJson)
+                ?? throw new JsonException("Stored provider result was null.");
+    }
+
+    public async Task SaveAsync(
+        string operationId,
+        AgentId agentId,
+        string providerProfileId,
+        string preDecisionStateHash,
+        ProviderDecisionResult result,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
+        await using var database = await contextFactory.CreateDbContextAsync(cancellationToken);
+        database.ProviderDecisionCheckpoints.Add(
+            new ProviderDecisionCheckpointEntity
+            {
+                OperationId = operationId,
+                AgentId = agentId.Value,
+                ProviderProfileId = providerProfileId,
+                PreDecisionStateHash = preDecisionStateHash,
+                ResultJson = JsonSerializer.Serialize(result, StorageJson),
+                ContextJson = result.ContextJson,
+                PromptTemplateHash = result.PromptTemplateHash,
+                DiagnosticCode = result.DiagnosticCode,
+                Status = (int)result.Status,
+                InputTokens = result.Usage.InputTokens,
+                OutputTokens = result.Usage.OutputTokens,
+                CostMicros = result.Usage.CostMicros,
+                LatencyMilliseconds = result.LatencyMilliseconds,
+                AttemptCount = result.AttemptCount,
+                CreatedAt = now,
+            });
+        try
+        {
+            await database.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            database.ChangeTracker.Clear();
+            if (!await database.ProviderDecisionCheckpoints.AnyAsync(
+                    value => value.OperationId == operationId && value.AgentId == agentId.Value,
+                    cancellationToken))
+            {
+                throw;
+            }
+        }
     }
 
     private static BuildVersionSnapshot ToSnapshot(BuildVersionEntity entity) =>

@@ -71,7 +71,9 @@ public sealed record ClaimedTurnOperation(
     RunId RunId,
     int Turn,
     RunState PreTurnState,
-    ImmutableDictionary<AgentId, ActionId> ScriptedActions);
+    ImmutableDictionary<AgentId, ActionId> ScriptedActions,
+    string CanonicalBuildJson,
+    string ProviderProfileId);
 
 public sealed record ReplayData(
     RunSummary Run,
@@ -92,3 +94,125 @@ public sealed record UsageSettlement(
     int InputTokens,
     int OutputTokens,
     int CostMicros);
+
+public enum ProviderMode
+{
+    Scripted,
+    Fake,
+    Live,
+}
+
+public sealed record ProviderProfile(
+    string ProfileId,
+    ProviderMode Mode,
+    string Model,
+    string PromptTemplateVersion,
+    int MaximumInputTokens,
+    int MaximumOutputTokens,
+    int MaximumResponseBytes,
+    TimeSpan AttemptTimeout,
+    int MaximumRepairRetries,
+    int InputPriceMicrosPerMillionTokens,
+    int OutputPriceMicrosPerMillionTokens,
+    int TurnOperationCostCapMicros,
+    int RunCostCapMicros,
+    int GuestDailyCostCapMicros,
+    int DeploymentDailyCostCapMicros,
+    int ConcurrencyCap,
+    string PriceTableVersion,
+    int RunAttemptCap = 40);
+
+public sealed record AgentIdentityView(
+    AgentId AgentId,
+    string Label);
+
+public sealed record BriefingCardView(
+    string CardId,
+    string Title,
+    string Text);
+
+public sealed record AgentCapabilityView(
+    IReadOnlyList<string> Capabilities);
+
+public sealed record ModuleView(
+    string ModuleId,
+    string Label,
+    string Description);
+
+public sealed record DeliveredMessageView(
+    string MessageId,
+    AgentId FromAgentId,
+    int SentTurn,
+    int DeliveryTurn,
+    string Text);
+
+public sealed record LegalActionView(
+    ActionId ActionId,
+    string Kind,
+    string? TargetId);
+
+public sealed record RuntimeLimits(
+    int MessageCharacters,
+    int MemoryCharacters,
+    int RationaleCharacters,
+    int OutputTokens,
+    int ResponseBytes);
+
+public sealed record AgentTurnContext(
+    string ContextVersion,
+    RunId RunId,
+    int Turn,
+    AgentIdentityView Self,
+    string UniversalRules,
+    string SharedDoctrine,
+    string RoleOrder,
+    IReadOnlyList<BriefingCardView> BriefingCards,
+    AgentCapabilityView Capabilities,
+    ModuleView? Module,
+    DirectiveDrift.Core.Observations.PrivateObservation Observation,
+    IReadOnlyList<DeliveredMessageView> DeliveredMessages,
+    string PrivateMemory,
+    IReadOnlyList<LegalActionView> LegalActions,
+    RuntimeLimits Limits);
+
+public enum ProviderAttemptStatus
+{
+    Accepted,
+    TransportError,
+    Timeout,
+    ResponseTooLarge,
+    MalformedJson,
+    InvalidSchema,
+    InvalidDecision,
+    Fallback,
+}
+
+public sealed record ProviderUsage(
+    int InputTokens,
+    int OutputTokens,
+    int CostMicros,
+    bool IsEstimated);
+
+public sealed record ProviderAttemptDiagnostic(
+    int Attempt,
+    ProviderAttemptStatus Status,
+    string DiagnosticCode,
+    int InputTokens,
+    int OutputTokens,
+    int LatencyMilliseconds,
+    string? ProviderRequestId);
+
+public sealed record ProviderDecisionResult(
+    ProposedDecision Decision,
+    ProviderAttemptStatus Status,
+    ProviderUsage Usage,
+    int LatencyMilliseconds,
+    string? ProviderRequestId,
+    string PriceTableVersion,
+    string PromptTemplateHash,
+    string ContextHash,
+    string DiagnosticCode,
+    bool RepairAttempted,
+    int AttemptCount,
+    string ContextJson,
+    IReadOnlyList<ProviderAttemptDiagnostic>? AttemptDiagnostics = null);

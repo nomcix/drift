@@ -77,6 +77,25 @@ public sealed class DecisionRecordEntity
     public required string DecisionJson { get; set; }
 }
 
+public sealed class ProviderDecisionCheckpointEntity
+{
+    public required string OperationId { get; set; }
+    public required string AgentId { get; set; }
+    public required string ProviderProfileId { get; set; }
+    public required string PreDecisionStateHash { get; set; }
+    public required string ResultJson { get; set; }
+    public required string ContextJson { get; set; }
+    public required string PromptTemplateHash { get; set; }
+    public required string DiagnosticCode { get; set; }
+    public int Status { get; set; }
+    public int InputTokens { get; set; }
+    public int OutputTokens { get; set; }
+    public int CostMicros { get; set; }
+    public int LatencyMilliseconds { get; set; }
+    public int AttemptCount { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
 public sealed class DomainEventEntity
 {
     public required string RunId { get; set; }

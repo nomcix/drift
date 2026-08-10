@@ -11,6 +11,8 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : DbC
     public DbSet<RunSnapshotEntity> RunSnapshots => Set<RunSnapshotEntity>();
     public DbSet<TurnOperationEntity> TurnOperations => Set<TurnOperationEntity>();
     public DbSet<DecisionRecordEntity> DecisionRecords => Set<DecisionRecordEntity>();
+    public DbSet<ProviderDecisionCheckpointEntity> ProviderDecisionCheckpoints =>
+        Set<ProviderDecisionCheckpointEntity>();
     public DbSet<DomainEventEntity> DomainEvents => Set<DomainEventEntity>();
     public DbSet<CertificationEntity> Certifications => Set<CertificationEntity>();
     public DbSet<CertificationRunEntity> CertificationRuns => Set<CertificationRunEntity>();
@@ -36,6 +38,8 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : DbC
             .HasFilter("Status IN (0, 1)");
         modelBuilder.Entity<DecisionRecordEntity>()
             .HasKey(entity => new { entity.RunId, entity.Turn, entity.AgentId });
+        modelBuilder.Entity<ProviderDecisionCheckpointEntity>()
+            .HasKey(entity => new { entity.OperationId, entity.AgentId });
         modelBuilder.Entity<DomainEventEntity>().HasKey(entity => new { entity.RunId, entity.Sequence });
         modelBuilder.Entity<CertificationEntity>().HasKey(entity => entity.Id);
         modelBuilder.Entity<CertificationRunEntity>()
@@ -44,7 +48,7 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : DbC
         modelBuilder.Entity<UsageLedgerEntity>().HasIndex(entity => entity.OperationId).IsUnique();
         modelBuilder.Entity<SchemaMetadataEntity>().HasKey(entity => entity.Key);
         modelBuilder.Entity<SchemaMetadataEntity>().HasData(
-            new SchemaMetadataEntity { Key = "schema-version", Value = "1" });
+            new SchemaMetadataEntity { Key = "schema-version", Value = "2" });
 
         modelBuilder.Entity<BuildEntity>()
             .HasOne<GuestProfileEntity>()
@@ -80,6 +84,11 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : DbC
             .HasOne<RunEntity>()
             .WithMany()
             .HasForeignKey(entity => entity.RunId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<ProviderDecisionCheckpointEntity>()
+            .HasOne<TurnOperationEntity>()
+            .WithMany()
+            .HasForeignKey(entity => entity.OperationId)
             .OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<DomainEventEntity>()
             .HasOne<RunEntity>()

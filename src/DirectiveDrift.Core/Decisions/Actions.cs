@@ -46,7 +46,8 @@ public sealed record ProposedDecision(
     ActionId ActionId,
     string? Message,
     string Rationale,
-    string Memory);
+    string Memory,
+    DecisionFallbackReason? ForcedFallbackReason = null);
 
 public enum DecisionFallbackReason
 {

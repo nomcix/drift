@@ -60,6 +60,7 @@ public sealed class PersistenceIntegrationTests : IAsyncLifetime
             "DecisionRecords",
             "DomainEvents",
             "GuestProfiles",
+            "ProviderDecisionCheckpoints",
             "RunSnapshots",
             "Runs",
             "SchemaMetadata",
@@ -198,11 +199,19 @@ public sealed class PersistenceIntegrationTests : IAsyncLifetime
             action => action.Key,
             action => new ProposedDecision(action.Value, null, "scripted", string.Empty));
         var result = TurnResolver.ResolveTurn(operation.PreTurnState, decisions);
+        var usageService = new PersistentUsageReservationService(contextFactory, TimeProvider.System);
+        var reservation = await usageService.ReserveAsync(
+            operation.OwnerId,
+            operation.RunId,
+            operation.OperationId,
+            CreateProfile(),
+            2,
+            default);
 
         await repository.CompleteTurnAsync(
             operation,
             result,
-            new UsageSettlement(operation.OperationId, 0, 0, 0),
+            usageService.Settle(reservation, []),
             now.AddSeconds(1),
             default);
 
@@ -221,6 +230,114 @@ public sealed class PersistenceIntegrationTests : IAsyncLifetime
         Assert.NotNull(replay);
         Assert.Equal(result.Events.Length + 1, replay.Events.Length);
         Assert.Equal(2, replay.Decisions.Length);
+    }
+
+    [Fact]
+    public async Task ReservationIsDurableIdempotentAndRejectsProjectedSpendBeforeDispatch()
+    {
+        var prepared = await SeedRunAsync();
+        var now = ParseTime("2026-08-09T12:00:00Z");
+        await repository.EnqueueTurnAsync("guest-owner", prepared.RunId, "budget-case", now, default);
+        var operation = await repository.ClaimNextTurnAsync(now, TimeSpan.FromMinutes(1), default);
+        Assert.NotNull(operation);
+        var service = new PersistentUsageReservationService(contextFactory, TimeProvider.System);
+        var profile = CreateProfile();
+
+        var attemptCapped = profile with { RunAttemptCap = 3 };
+        var attemptException = await Assert.ThrowsAsync<DirectiveDrift.Application.BudgetExceededException>(
+            () => service.ReserveAsync(
+                operation.OwnerId,
+                operation.RunId,
+                operation.OperationId,
+                attemptCapped,
+                2,
+                default));
+        Assert.Equal("run-attempt-cap", attemptException.Code);
+
+        var first = await service.ReserveAsync(
+            operation.OwnerId,
+            operation.RunId,
+            operation.OperationId,
+            profile,
+            2,
+            default);
+        var replay = await service.ReserveAsync(
+            operation.OwnerId,
+            operation.RunId,
+            operation.OperationId,
+            profile,
+            2,
+            default);
+
+        Assert.Equal(first, replay);
+        await using var database = await contextFactory.CreateDbContextAsync();
+        Assert.Equal(1, await database.UsageLedger.CountAsync());
+        Assert.Equal("reserved", (await database.UsageLedger.SingleAsync()).Status);
+
+        var rejected = profile with { TurnOperationCostCapMicros = first.ReservedCostMicros - 1 };
+        await Assert.ThrowsAsync<DirectiveDrift.Application.BudgetExceededException>(
+            () => service.ReserveAsync(
+                operation.OwnerId,
+                operation.RunId,
+                "different-operation",
+                rejected,
+                2,
+                default));
+    }
+
+    [Fact]
+    public async Task ValidProviderCheckpointSurvivesRestartAndRequiresMatchingIntegrityFields()
+    {
+        var prepared = await SeedRunAsync();
+        var now = ParseTime("2026-08-09T12:00:00Z");
+        await repository.EnqueueTurnAsync("guest-owner", prepared.RunId, "checkpoint", now, default);
+        var operation = await repository.ClaimNextTurnAsync(now, TimeSpan.FromMinutes(1), default);
+        Assert.NotNull(operation);
+        var agentId = operation.PreTurnState.Agents[0].AgentId;
+        var result = new ProviderDecisionResult(
+            new ProposedDecision(new ActionId("wait"), null, "valid", string.Empty),
+            ProviderAttemptStatus.Accepted,
+            new ProviderUsage(100, 10, 20, false),
+            12,
+            "safe-request-id",
+            "prices-v1",
+            "prompt-hash",
+            "context-hash",
+            "accepted",
+            false,
+            1,
+            "{\"private\":true}");
+
+        await repository.SaveAsync(
+            operation.OperationId,
+            agentId,
+            "profile-v1",
+            "state-hash-v1",
+            result,
+            now,
+            default);
+        var restarted = new EfGameRepository(contextFactory, TimeProvider.System);
+
+        Assert.Equal(
+            result,
+            await restarted.GetAcceptedAsync(
+                operation.OperationId,
+                agentId,
+                "profile-v1",
+                "state-hash-v1",
+                default));
+        Assert.Null(await restarted.GetAcceptedAsync(
+            operation.OperationId,
+            agentId,
+            "profile-v2",
+            "state-hash-v1",
+            default));
+        Assert.Null(await restarted.GetAcceptedAsync(
+            operation.OperationId,
+            agentId,
+            "profile-v1",
+            "different-state",
+            default));
     }
 
     private async Task<PreparedRun> SeedRunAsync()
@@ -297,6 +414,25 @@ public sealed class PersistenceIntegrationTests : IAsyncLifetime
 
     private static DateTimeOffset ParseTime(string value) =>
         DateTimeOffset.Parse(value, CultureInfo.InvariantCulture);
+
+    private static ProviderProfile CreateProfile() => new(
+        "test-profile",
+        ProviderMode.Fake,
+        "test-model",
+        "prompt-v1",
+        2_200,
+        180,
+        8_192,
+        TimeSpan.FromSeconds(25),
+        1,
+        250_000,
+        2_000_000,
+        10_000,
+        250_000,
+        500_000,
+        10_000_000,
+        4,
+        "prices-v1");
 
     private sealed class TestContextFactory(DbContextOptions<GameDbContext> options)
         : IDbContextFactory<GameDbContext>

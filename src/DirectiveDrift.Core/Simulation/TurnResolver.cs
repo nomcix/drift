@@ -195,6 +195,11 @@ public static class TurnResolver
             return DecisionFallbackReason.Missing;
         }
 
+        if (proposed.ForcedFallbackReason is not null)
+        {
+            return proposed.ForcedFallbackReason;
+        }
+
         if (observation.LegalActions.Find(proposed.ActionId) is null)
         {
             return DecisionFallbackReason.IllegalAction;

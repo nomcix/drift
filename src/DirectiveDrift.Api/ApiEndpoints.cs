@@ -23,7 +23,10 @@ public static class ApiEndpoints
 
         api.MapGet(
             "/runtime",
-            () => new RuntimeResponse("v1", "scripted", CanonicalStateSerializer.Version));
+            (IAgentDecisionProvider provider) => new RuntimeResponse(
+                "v1",
+                provider.Profile.Mode.ToString().ToLowerInvariant(),
+                CanonicalStateSerializer.Version));
         api.MapGet(
             "/missions",
             (ColdStartRuntimeCatalog catalog) => new[]
