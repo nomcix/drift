@@ -1,6 +1,6 @@
 # Directive Drift build status
 
-Last updated: 2026-08-10
+Last updated: 2026-08-09
 
 | Packet | Status | Evidence |
 |---|---|---|
@@ -14,7 +14,7 @@ Last updated: 2026-08-10
 | P6 — SVG map and presentation reducer | Complete | Semantic station SVG, trusted silhouettes, typed presentation fixtures, canonical-event reducer, ordered playback, gated lenses, accessible state, responsive context drawer, and powered/unpowered visual gates pass. |
 | P7 — Scripted end-to-end game | Complete | Generated-client guest bootstrap, immutable build revisions, durable operation polling/resume, paged canonical events, guided fail/revise/succeed onboarding, replay truth/diagnostics, and Playwright smoke gates pass. |
 | P8 — AI runtime, fake provider, and one live adapter | Complete | Private context/prompt assembly, strict decision validation/repair/fallback, fake failure modes, pinned OpenAI Responses adapter, concurrent calls, pre-dispatch SQLite budgets, durable checkpoints, usage/cost diagnostics, and leakage/cap/restart gates pass. |
-| P9 — Practice, certification, comparison, and sharing | Acceptance pending | Implementation and non-browser suites pass; OpenAPI regeneration and Playwright await permission to bind temporary localhost servers. |
+| P9 — Practice, certification, comparison, and sharing | Complete | Revealed fixed/random practice, locked hidden 3-run certification with 2/3 enforcement and resume, assistance eligibility, history/diff/comparison, badges, safe SVG share cards, allowance/diagnostics, and secrecy gates pass. |
 | P10+ | Not started | Product hardening, evaluation, accessibility audit, deployment, and launch remain deferred. |
 
 ## P9 implementation status
@@ -50,8 +50,8 @@ cost micros remain in the internal repository diagnostic projection.
 - Authored JSON Schemas and build contract version `1` are unchanged; ADR 0001
   remains the accepted roster contract.
 - HTTP/OpenAPI adds certification, comparison, Emergency Burst, usage
-  allowance, practice disclosure, and safe share routes; TypeScript client
-  regeneration is the remaining acceptance gate.
+  allowance, practice disclosure, and safe share routes; the TypeScript client
+  is regenerated from that document.
 - EF migration `20260810014342_P9Mastery` advances persistence metadata to
   version `3`; details are in `docs/migrations/0003-p9-mastery.md`.
 - No new analytics sink or raw authored/model text logging is introduced.
@@ -62,6 +62,29 @@ cost micros remain in the internal repository diagnostic projection.
   regression/performance pass, security review, or usability study was begun.
 - No public gallery, account system, leaderboard, provider selector, second
   mission, or additional provider profile was added.
+
+### P9 acceptance evidence
+
+Run on 2026-08-09:
+
+- `dotnet build --no-restore --disable-build-servers --verbosity minimal -m:1`
+  — passed with 0 warnings and 0 errors.
+- `dotnet test --no-build --no-restore --disable-build-servers --verbosity minimal -m:1`
+  — 145 passed, 0 failed, 0 skipped.
+- P9 focused suites — Core 56 passed, Persistence 11 passed, and API 8 passed.
+  These include Emergency Burst assistance, random-practice disclosure,
+  three-run selection secrecy/resume, strict 2/3 completion, historical
+  version retention, assisted ineligibility, first differing decision,
+  allowance/diagnostics, and safe share metadata/SVG.
+- `dotnet ef migrations has-pending-model-changes ... --no-build` — passed;
+  no model changes remain outside migration `20260810014342_P9Mastery`.
+- `./scripts/generate-api-client.sh` — passed and regenerated OpenAPI/client
+  contracts for all P9 routes.
+- `npm run lint --prefix src/DirectiveDrift.Web` — passed with 0 warnings.
+- `npm run test --prefix src/DirectiveDrift.Web` — 23 passed, 0 failed.
+- `npm run build --prefix src/DirectiveDrift.Web` — passed.
+- `npm run test:e2e --prefix src/DirectiveDrift.Web` — 2 Chromium scenarios
+  passed, including fail/revise/succeed/replay and durable refresh/resume.
 
 ## P8 implementation status
 

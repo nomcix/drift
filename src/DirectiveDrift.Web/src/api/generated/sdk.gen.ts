@@ -3,7 +3,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { GetApiV1BuildsByBuildIdData, GetApiV1BuildsByBuildIdResponses, GetApiV1BuildsByBuildIdVersionsData, GetApiV1BuildsByBuildIdVersionsResponses, GetApiV1BuildsData, GetApiV1BuildsResponses, GetApiV1MissionsByMissionIdData, GetApiV1MissionsByMissionIdPracticeVariantsData, GetApiV1MissionsByMissionIdPracticeVariantsResponses, GetApiV1MissionsByMissionIdResponses, GetApiV1MissionsData, GetApiV1MissionsResponses, GetApiV1OperationsByOperationIdData, GetApiV1OperationsByOperationIdResponses, GetApiV1RunsByRunIdData, GetApiV1RunsByRunIdEventsData, GetApiV1RunsByRunIdEventsResponses, GetApiV1RunsByRunIdReplayData, GetApiV1RunsByRunIdReplayResponses, GetApiV1RunsByRunIdResponses, GetApiV1RuntimeData, GetApiV1RuntimeResponses, PostApiV1BuildsByBuildIdVersionsData, PostApiV1BuildsByBuildIdVersionsResponses, PostApiV1BuildsData, PostApiV1BuildsResponses, PostApiV1RunsByRunIdTurnsData, PostApiV1RunsByRunIdTurnsResponses, PostApiV1RunsData, PostApiV1RunsResponses } from './types.gen';
+import type { GetApiV1BuildsByBuildIdData, GetApiV1BuildsByBuildIdResponses, GetApiV1BuildsByBuildIdVersionsData, GetApiV1BuildsByBuildIdVersionsResponses, GetApiV1BuildsData, GetApiV1BuildsResponses, GetApiV1CertificationsByCertificationIdData, GetApiV1CertificationsByCertificationIdResponses, GetApiV1ComparisonsData, GetApiV1ComparisonsResponses, GetApiV1MissionsByMissionIdData, GetApiV1MissionsByMissionIdPracticeVariantsData, GetApiV1MissionsByMissionIdPracticeVariantsResponses, GetApiV1MissionsByMissionIdResponses, GetApiV1MissionsData, GetApiV1MissionsResponses, GetApiV1OperationsByOperationIdData, GetApiV1OperationsByOperationIdResponses, GetApiV1RunsByRunIdData, GetApiV1RunsByRunIdEventsData, GetApiV1RunsByRunIdEventsResponses, GetApiV1RunsByRunIdReplayData, GetApiV1RunsByRunIdReplayResponses, GetApiV1RunsByRunIdResponses, GetApiV1RunsByRunIdShareCardSvgData, GetApiV1RunsByRunIdShareCardSvgResponses, GetApiV1RunsByRunIdShareData, GetApiV1RunsByRunIdShareResponses, GetApiV1RuntimeData, GetApiV1RuntimeResponses, GetApiV1UsageAllowanceData, GetApiV1UsageAllowanceResponses, PostApiV1BuildsByBuildIdVersionsData, PostApiV1BuildsByBuildIdVersionsResponses, PostApiV1BuildsData, PostApiV1BuildsResponses, PostApiV1CertificationsData, PostApiV1CertificationsResponses, PostApiV1RunsByRunIdEmergencyBurstData, PostApiV1RunsByRunIdEmergencyBurstResponses, PostApiV1RunsByRunIdTurnsData, PostApiV1RunsByRunIdTurnsResponses, PostApiV1RunsData, PostApiV1RunsResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -69,3 +69,31 @@ export const getApiV1OperationsByOperationId = <ThrowOnError extends boolean = f
 export const getApiV1RunsByRunIdEvents = <ThrowOnError extends boolean = false>(options: Options<GetApiV1RunsByRunIdEventsData, ThrowOnError>): RequestResult<GetApiV1RunsByRunIdEventsResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetApiV1RunsByRunIdEventsResponses, unknown, ThrowOnError>({ url: '/api/v1/runs/{runId}/events', ...options });
 
 export const getApiV1RunsByRunIdReplay = <ThrowOnError extends boolean = false>(options: Options<GetApiV1RunsByRunIdReplayData, ThrowOnError>): RequestResult<GetApiV1RunsByRunIdReplayResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetApiV1RunsByRunIdReplayResponses, unknown, ThrowOnError>({ url: '/api/v1/runs/{runId}/replay', ...options });
+
+export const postApiV1RunsByRunIdEmergencyBurst = <ThrowOnError extends boolean = false>(options: Options<PostApiV1RunsByRunIdEmergencyBurstData, ThrowOnError>): RequestResult<PostApiV1RunsByRunIdEmergencyBurstResponses, unknown, ThrowOnError> => (options.client ?? client).post<PostApiV1RunsByRunIdEmergencyBurstResponses, unknown, ThrowOnError>({
+    url: '/api/v1/runs/{runId}/emergency-burst',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const postApiV1Certifications = <ThrowOnError extends boolean = false>(options: Options<PostApiV1CertificationsData, ThrowOnError>): RequestResult<PostApiV1CertificationsResponses, unknown, ThrowOnError> => (options.client ?? client).post<PostApiV1CertificationsResponses, unknown, ThrowOnError>({
+    url: '/api/v1/certifications',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const getApiV1CertificationsByCertificationId = <ThrowOnError extends boolean = false>(options: Options<GetApiV1CertificationsByCertificationIdData, ThrowOnError>): RequestResult<GetApiV1CertificationsByCertificationIdResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetApiV1CertificationsByCertificationIdResponses, unknown, ThrowOnError>({ url: '/api/v1/certifications/{certificationId}', ...options });
+
+export const getApiV1Comparisons = <ThrowOnError extends boolean = false>(options: Options<GetApiV1ComparisonsData, ThrowOnError>): RequestResult<GetApiV1ComparisonsResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetApiV1ComparisonsResponses, unknown, ThrowOnError>({ url: '/api/v1/comparisons', ...options });
+
+export const getApiV1UsageAllowance = <ThrowOnError extends boolean = false>(options?: Options<GetApiV1UsageAllowanceData, ThrowOnError>): RequestResult<GetApiV1UsageAllowanceResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetApiV1UsageAllowanceResponses, unknown, ThrowOnError>({ url: '/api/v1/usage-allowance', ...options });
+
+export const getApiV1RunsByRunIdShare = <ThrowOnError extends boolean = false>(options: Options<GetApiV1RunsByRunIdShareData, ThrowOnError>): RequestResult<GetApiV1RunsByRunIdShareResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetApiV1RunsByRunIdShareResponses, unknown, ThrowOnError>({ url: '/api/v1/runs/{runId}/share', ...options });
+
+export const getApiV1RunsByRunIdShareCardSvg = <ThrowOnError extends boolean = false>(options: Options<GetApiV1RunsByRunIdShareCardSvgData, ThrowOnError>): RequestResult<GetApiV1RunsByRunIdShareCardSvgResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetApiV1RunsByRunIdShareCardSvgResponses, unknown, ThrowOnError>({ url: '/api/v1/runs/{runId}/share-card.svg', ...options });

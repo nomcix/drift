@@ -11,12 +11,21 @@ export type AnonymousTypeOfstringAndstringAndstring = {
     contentVersion: null | string;
 };
 
+export type EmergencyBurstRequest = {
+    text: string;
+};
+
 export type JsonElement = unknown;
 
 export type RuntimeResponse = {
     apiVersion: string;
     providerMode: string;
     stateSchemaVersion: string;
+};
+
+export type StartCertificationRequest = {
+    buildId: string;
+    buildVersion: number | string;
 };
 
 export type StartRunRequest = {
@@ -256,6 +265,115 @@ export type GetApiV1RunsByRunIdReplayData = {
 };
 
 export type GetApiV1RunsByRunIdReplayResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiV1RunsByRunIdEmergencyBurstData = {
+    body: EmergencyBurstRequest;
+    path: {
+        runId: string;
+    };
+    query?: never;
+    url: '/api/v1/runs/{runId}/emergency-burst';
+};
+
+export type PostApiV1RunsByRunIdEmergencyBurstResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiV1CertificationsData = {
+    body: StartCertificationRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/certifications';
+};
+
+export type PostApiV1CertificationsResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiV1CertificationsByCertificationIdData = {
+    body?: never;
+    path: {
+        certificationId: string;
+    };
+    query?: never;
+    url: '/api/v1/certifications/{certificationId}';
+};
+
+export type GetApiV1CertificationsByCertificationIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiV1ComparisonsData = {
+    body?: never;
+    path?: never;
+    query: {
+        leftRunId: string;
+        rightRunId: string;
+    };
+    url: '/api/v1/comparisons';
+};
+
+export type GetApiV1ComparisonsResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiV1UsageAllowanceData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/usage-allowance';
+};
+
+export type GetApiV1UsageAllowanceResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiV1RunsByRunIdShareData = {
+    body?: never;
+    path: {
+        runId: string;
+    };
+    query?: never;
+    url: '/api/v1/runs/{runId}/share';
+};
+
+export type GetApiV1RunsByRunIdShareResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiV1RunsByRunIdShareCardSvgData = {
+    body?: never;
+    path: {
+        runId: string;
+    };
+    query?: never;
+    url: '/api/v1/runs/{runId}/share-card.svg';
+};
+
+export type GetApiV1RunsByRunIdShareCardSvgResponses = {
     /**
      * OK
      */

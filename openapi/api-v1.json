@@ -338,7 +338,169 @@
     "/api/v1/runs/{runId}/replay": {
       "get": {
         "tags": [
+          "ApiEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{runId}/emergency-burst": {
+      "post": {
+        "tags": [
+          "ApiEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmergencyBurstRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/certifications": {
+      "post": {
+        "tags": [
+          "ApiEndpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartCertificationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/certifications/{certificationId}": {
+      "get": {
+        "tags": [
           "DirectiveDrift.Api"
+        ],
+        "parameters": [
+          {
+            "name": "certificationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/comparisons": {
+      "get": {
+        "tags": [
+          "ApiEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "leftRunId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rightRunId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/usage-allowance": {
+      "get": {
+        "tags": [
+          "DirectiveDrift.Api"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{runId}/share": {
+      "get": {
+        "tags": [
+          "ApiEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{runId}/share-card.svg": {
+      "get": {
+        "tags": [
+          "ApiEndpoints"
         ],
         "parameters": [
           {
@@ -388,6 +550,17 @@
           }
         }
       },
+      "EmergencyBurstRequest": {
+        "required": [
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          }
+        }
+      },
       "JsonElement": { },
       "RuntimeResponse": {
         "required": [
@@ -405,6 +578,26 @@
           },
           "stateSchemaVersion": {
             "type": "string"
+          }
+        }
+      },
+      "StartCertificationRequest": {
+        "required": [
+          "buildId",
+          "buildVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "buildId": {
+            "type": "string"
+          },
+          "buildVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         }
       },
