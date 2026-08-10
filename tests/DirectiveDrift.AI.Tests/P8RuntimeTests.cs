@@ -26,6 +26,7 @@ public sealed class P8RuntimeTests
         Assert.Contains("allowed-doctrine-marker", request, StringComparison.Ordinal);
         Assert.Contains("UNTRUSTED_MISSION_DATA_BEGIN", request, StringComparison.Ordinal);
         Assert.Contains("\"type\":\"json_schema\"", request, StringComparison.Ordinal);
+        Assert.Contains("\"reasoning\":{\"effort\":\"none\"}", request, StringComparison.Ordinal);
         Assert.DoesNotContain("api-key-marker", request, StringComparison.Ordinal);
         Assert.DoesNotContain("reference-solution-marker", request, StringComparison.Ordinal);
     }

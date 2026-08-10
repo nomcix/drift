@@ -78,6 +78,10 @@ public sealed class OpenAiResponsesTransport(HttpClient httpClient, string apiKe
                     new { role = "user", content = $"UNTRUSTED_MISSION_DATA_BEGIN\n{request.Prompt.ContextJson}\nUNTRUSTED_MISSION_DATA_END\n{repair}" },
                 },
                 max_output_tokens = request.Profile.MaximumOutputTokens,
+                reasoning = new
+                {
+                    effort = request.Profile.ReasoningEffort,
+                },
                 text = new
                 {
                     format = new

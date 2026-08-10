@@ -40,9 +40,14 @@ public static class ProviderProfiles
 
     public static ProviderProfile OpenAi { get; } = Fake with
     {
-        ProfileId = "openai-gpt-5-mini-2025-08-07-v1",
+        ProfileId = "openai-gpt-5.4-mini-2026-03-17-v3",
         Mode = ProviderMode.Live,
-        Model = "gpt-5-mini-2025-08-07",
+        Model = "gpt-5.4-mini-2026-03-17",
+        PromptTemplateVersion = "dd-agent-turn-v5",
+        InputPriceMicrosPerMillionTokens = 750_000,
+        OutputPriceMicrosPerMillionTokens = 4_500_000,
         ConcurrencyCap = 4,
+        PriceTableVersion = "openai-2026-08-09-gpt-5.4-mini",
+        ReasoningEffort = "none",
     };
 }

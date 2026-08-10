@@ -13,6 +13,9 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="../../src/DirectiveDrift.AI/DirectiveDrift.AI.csproj" />
+    <ProjectReference Include="../../src/DirectiveDrift.Application/DirectiveDrift.Application.csproj" />
     <ProjectReference Include="../../src/DirectiveDrift.Content/DirectiveDrift.Content.csproj" />
+    <ProjectReference Include="../../tools/DirectiveDrift.EvaluationCli/DirectiveDrift.EvaluationCli.csproj" />
   </ItemGroup>
 </Project>

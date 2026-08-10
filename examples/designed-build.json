@@ -4,10 +4,10 @@
   "missionId": "cold-start",
   "name": "Split Lantern",
   "version": 1,
-  "sharedDoctrine": "Survival before speed. Kite proposes a sync turn at least one turn ahead; Wren acknowledges only after power is stable. If blocked, report location and fallback. Preserve the recorder and return together.",
+  "sharedDoctrine": "Act promptly. Kite scouts West Transit to Relay Nexus and reports Wren’s safe route. Wren reaches Auxiliary Reactor and repairs. Kite calls a sync turn from Alpha; Wren activates Beta then. Kite gets the recorder; both extract.",
   "agents": {
     "kite": {
-      "roleOrder": "Scout links before Wren commits. Warn hazards, stage at Alpha, propose sync with margin, retrieve the recorder, then route to Landing Bay.",
+      "roleOrder": "Go west-hall, junction. WAIT and message safe route IDs. Go console-alpha. After power message “sync next turn”; next turn activate. Get recorder; extract.",
       "briefingCardIds": [
         "sync-contract",
         "recovery-contract",
@@ -17,7 +17,7 @@
       "moduleId": "cargo-clamp"
     },
     "wren": {
-      "roleOrder": "Reach the reactor by the safe reported route; finish repair uninterrupted. Acknowledge sync, take Beta, then support extraction.",
+      "roleOrder": "WAIT for route message; follow IDs to auxiliary-power. Repair until online. Go junction, console-beta. On sync message wait for named turn, activate; extract.",
       "briefingCardIds": [
         "power-contract",
         "sync-contract",

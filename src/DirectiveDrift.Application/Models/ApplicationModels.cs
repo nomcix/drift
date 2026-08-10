@@ -193,7 +193,8 @@ public sealed record ProviderProfile(
     int DeploymentDailyCostCapMicros,
     int ConcurrencyCap,
     string PriceTableVersion,
-    int RunAttemptCap = 40);
+    int RunAttemptCap = 40,
+    string ReasoningEffort = "minimal");
 
 public sealed record AgentIdentityView(
     AgentId AgentId,

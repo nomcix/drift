@@ -34,7 +34,7 @@ public sealed class AgentTurnContextFactory(ValidatedMission mission) : IAgentTu
             preTurnState.RunId,
             preTurnState.Turn + 1,
             new AgentIdentityView(agentId, authoredAgent.Label),
-            "Choose exactly one listed legal action. Messages arrive on a later turn. Only observed or delivered facts are known.",
+            "Choose exactly one listed legal action. A message may accompany any action; there is no separate message action. Messages arrive on a later turn. Only observed or delivered facts are known.",
             build.SharedDoctrine,
             configured.RoleOrder,
             configured.BriefingCardIds.Select(

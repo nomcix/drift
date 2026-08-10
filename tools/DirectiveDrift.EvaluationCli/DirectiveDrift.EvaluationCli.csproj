@@ -3,6 +3,9 @@
     <OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../../src/DirectiveDrift.AI/DirectiveDrift.AI.csproj" />
+    <ProjectReference Include="../../src/DirectiveDrift.Api/DirectiveDrift.Api.csproj" />
+    <ProjectReference Include="../../src/DirectiveDrift.Application/DirectiveDrift.Application.csproj" />
     <ProjectReference Include="../../src/DirectiveDrift.Content/DirectiveDrift.Content.csproj" />
   </ItemGroup>
 </Project>
