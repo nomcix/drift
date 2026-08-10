@@ -19,6 +19,7 @@ export type ApiRun = {
   readonly turn: number;
   readonly status: number;
   readonly stateHash: string;
+  readonly assisted?: boolean;
 };
 
 export type ApiOperation = {
@@ -76,9 +77,9 @@ export async function addBuildVersion(build: BuildDocument) {
   }));
 }
 
-export async function startRun(buildId: string, buildVersion: number) {
+export async function startRun(buildId: string, buildVersion: number, variantId = "cs-practice-01") {
   return data(await postApiV1Runs({
-    body: { buildId, buildVersion, variantId: "cs-practice-01" },
+    body: { buildId, buildVersion, variantId },
     headers: csrfHeader(),
   })) as ApiRun;
 }

@@ -2,7 +2,9 @@ using System.Collections.Immutable;
 using System.Globalization;
 using DirectiveDrift.Application.Models;
 using DirectiveDrift.Core.Decisions;
+using DirectiveDrift.Core.Events;
 using DirectiveDrift.Core.Model;
+using DirectiveDrift.Core.Serialization;
 using DirectiveDrift.Core.Simulation;
 using DirectiveDrift.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -233,6 +235,160 @@ public sealed class PersistenceIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task CertificationLocksMetadataHidesVariantsAndEnforcesTwoOfThree()
+    {
+        await SeedRunAsync();
+        var now = ParseTime("2026-08-09T14:00:00Z");
+        var prepared = Enumerable.Range(1, 3)
+            .Select(slot => PrepareCertificationRun(slot, "cert-test"))
+            .ToArray();
+
+        var active = await repository.CreateCertificationAsync(
+            "guest-owner", "cert-test", "build-test", 1, "profile-v1",
+            "content-v1", "rules-v1", "score-v1", "pool-v1", prepared, now, default);
+
+        Assert.Equal("active", active.Status);
+        Assert.False(active.Revealed);
+        Assert.All(active.Runs, value => Assert.Null(value.VariantDisclosureJson));
+        await using (var database = await contextFactory.CreateDbContextAsync())
+        {
+            var first = await database.Runs.SingleAsync(value => value.Id == "cert-run-1");
+            var second = await database.Runs.SingleAsync(value => value.Id == "cert-run-2");
+            first.Status = (int)RunStatus.Succeeded;
+            second.Status = (int)RunStatus.Failed;
+            await database.SaveChangesAsync();
+        }
+
+        await repository.EnqueueTurnAsync("guest-owner", new RunId("cert-run-3"), "cert-final", now, default);
+        var claimed = await repository.ClaimNextTurnAsync(now, TimeSpan.FromMinutes(1), default);
+        Assert.NotNull(claimed);
+        await using (var database = await contextFactory.CreateDbContextAsync())
+        {
+            database.UsageLedger.Add(new UsageLedgerEntity
+            {
+                Id = "cert-usage",
+                OwnerId = "guest-owner",
+                RunId = claimed.RunId.Value,
+                OperationId = claimed.OperationId,
+                ReservedInputTokens = 0,
+                ReservedOutputTokens = 0,
+                ReservedCostMicros = 0,
+                Status = "reserved",
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+            await database.SaveChangesAsync();
+        }
+        var succeeded = claimed.PreTurnState with { Turn = 1, Status = RunStatus.Succeeded };
+        var stateHash = CanonicalStateSerializer.Hash(succeeded);
+        await repository.CompleteTurnAsync(
+            claimed,
+            new TurnResult(succeeded, [], [], [], stateHash),
+            new UsageSettlement("cert-usage", 0, 0, 0),
+            now.AddSeconds(1),
+            default);
+
+        var completed = await repository.GetCertificationAsync("guest-owner", "cert-test", default);
+        Assert.NotNull(completed);
+        Assert.Equal("passed", completed.Status);
+        Assert.Equal(2, completed.Successes);
+        Assert.True(completed.Revealed);
+        Assert.All(completed.Runs, value => Assert.Contains("cs-cert-", value.VariantDisclosureJson));
+        Assert.Equal("profile-v1", completed.ProviderProfileId);
+        Assert.Equal("pool-v1", completed.CertificationVersion);
+        Assert.Equal("robust-build", Assert.Single(completed.Badges));
+    }
+
+    [Fact]
+    public async Task AssistedPracticeDoesNotCountTowardCertificationEligibility()
+    {
+        await SeedRunAsync();
+        await using var database = await contextFactory.CreateDbContextAsync();
+        var first = await database.Runs.SingleAsync();
+        first.Status = (int)RunStatus.Succeeded;
+        first.VariantId = "practice-a";
+        for (var index = 2; index <= 3; index++)
+        {
+            database.Runs.Add(new RunEntity
+            {
+                Id = $"eligibility-{index}",
+                OwnerId = "guest-owner",
+                BuildId = "build-test",
+                BuildVersion = 1,
+                MissionId = "mission-test",
+                VariantId = $"practice-{index}",
+                Turn = 1,
+                Status = (int)RunStatus.Succeeded,
+                StateHash = "hash",
+                ProviderProfileId = "scripted-test",
+                ScriptedPlanJson = "[]",
+                Kind = (int)RunKind.Practice,
+                Assisted = index == 3,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow,
+            });
+        }
+        await database.SaveChangesAsync();
+
+        Assert.False(await repository.HasCertificationEligibilityAsync(
+            "guest-owner", "build-test", 1, "scripted-test", default));
+        var assisted = await database.Runs.SingleAsync(value => value.Id == "eligibility-3");
+        assisted.Assisted = false;
+        await database.SaveChangesAsync();
+        Assert.True(await repository.HasCertificationEligibilityAsync(
+            "guest-owner", "build-test", 1, "scripted-test", default));
+    }
+
+    [Fact]
+    public async Task ComparisonFindsFirstDecisionAndBuildDifference()
+    {
+        await SeedRunAsync();
+        const string firstBuild = "{\"sharedDoctrine\":\"hold\",\"agents\":{\"agent-a\":{\"roleOrder\":\"left\",\"briefingCardIds\":[\"one\"],\"moduleId\":\"none\"},\"agent-b\":{\"roleOrder\":\"anchor\",\"briefingCardIds\":[\"two\"],\"moduleId\":\"none\"}}}";
+        const string secondBuild = "{\"sharedDoctrine\":\"hold\",\"agents\":{\"agent-a\":{\"roleOrder\":\"right\",\"briefingCardIds\":[\"one\"],\"moduleId\":\"none\"},\"agent-b\":{\"roleOrder\":\"anchor\",\"briefingCardIds\":[\"two\"],\"moduleId\":\"none\"}}}";
+        await using (var database = await contextFactory.CreateDbContextAsync())
+        {
+            (await database.BuildVersions.SingleAsync()).CanonicalJson = firstBuild;
+            await database.SaveChangesAsync();
+        }
+        await repository.AddBuildVersionAsync(
+            "guest-owner", "build-test", secondBuild, ParseTime("2026-08-09T15:00:00Z"), default);
+        await using (var database = await contextFactory.CreateDbContextAsync())
+        {
+            database.Runs.Add(new RunEntity
+            {
+                Id = "run-right",
+                OwnerId = "guest-owner",
+                BuildId = "build-test",
+                BuildVersion = 2,
+                MissionId = "mission-test",
+                VariantId = "variant-test",
+                Turn = 1,
+                Status = (int)RunStatus.Succeeded,
+                StateHash = "right-hash",
+                ProviderProfileId = "scripted-test",
+                ScriptedPlanJson = "[]",
+                Kind = (int)RunKind.Practice,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow,
+            });
+            database.DecisionRecords.AddRange(
+                new DecisionRecordEntity { RunId = "run-test", Turn = 1, AgentId = "agent-a", OperationId = "left-op", ActionId = "move-left", DecisionJson = "{}" },
+                new DecisionRecordEntity { RunId = "run-right", Turn = 1, AgentId = "agent-a", OperationId = "right-op", ActionId = "move-right", DecisionJson = "{}" });
+            await database.SaveChangesAsync();
+        }
+
+        var comparison = await repository.GetComparisonAsync(
+            "guest-owner", new RunId("run-test"), new RunId("run-right"), default);
+
+        Assert.NotNull(comparison);
+        Assert.Equal(1, comparison.FirstDifferingDecision?.Turn);
+        Assert.Equal("agent-a", comparison.FirstDifferingDecision?.AgentId.Value);
+        Assert.Equal("move-left", comparison.FirstDifferingDecision?.LeftActionId);
+        Assert.Equal("move-right", comparison.FirstDifferingDecision?.RightActionId);
+        Assert.Equal("agent-a", Assert.Single(comparison.Build.RoleOrdersChanged).Value);
+    }
+
+    [Fact]
     public async Task ReservationIsDurableIdempotentAndRejectsProjectedSpendBeforeDispatch()
     {
         var prepared = await SeedRunAsync();
@@ -372,6 +528,25 @@ public sealed class PersistenceIntegrationTests : IAsyncLifetime
             ParseTime("2026-08-09T10:01:00Z"),
             default);
         return prepared;
+    }
+
+    private static PreparedRun PrepareCertificationRun(int slot, string certificationId)
+    {
+        var definition = CreateDefinition() with
+        {
+            Mission = new MissionIdentity(
+                new MissionId("mission-test"), new VariantId($"cs-cert-{slot}"),
+                "content-v1", "rules-v1", "score-v1"),
+        };
+        var runId = new RunId($"cert-run-{slot}");
+        var start = RunStartFactory.Create(runId, definition, 123, 456);
+        var actions = definition.Agents.ToImmutableDictionary(
+            agent => agent.AgentId, _ => new ActionId("wait"));
+        return new PreparedRun(
+            runId, "build-test", 1, start.State, start.Event,
+            ImmutableDictionary<int, ImmutableDictionary<AgentId, ActionId>>.Empty.Add(1, actions),
+            "profile-v1", RunKind.Certification, certificationId,
+            $"{{\"variantId\":\"cs-cert-{slot}\"}}");
     }
 
     private static RunDefinition CreateDefinition()

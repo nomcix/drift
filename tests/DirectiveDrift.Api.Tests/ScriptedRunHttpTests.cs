@@ -136,6 +136,17 @@ public sealed class ScriptedRunHttpTests(P4ApiFactory application)
             terminalRun.GetProperty("stateHash").GetString(),
             finalTurn.GetProperty("payload").GetProperty("stateHash").GetString());
         Assert.False(string.IsNullOrWhiteSpace(firstOperationId));
+
+        using var shareResponse = await ownerClient.GetAsync($"/api/v1/runs/{runId}/share", cancellation.Token);
+        shareResponse.EnsureSuccessStatusCode();
+        var share = await shareResponse.Content.ReadAsStringAsync(cancellation.Token);
+        Assert.Contains("Split Lantern", share, StringComparison.Ordinal);
+        Assert.DoesNotContain("roleOrder", share, StringComparison.Ordinal);
+        Assert.DoesNotContain("message", share, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("variant", share, StringComparison.OrdinalIgnoreCase);
+        using var image = await ownerClient.GetAsync($"/api/v1/runs/{runId}/share-card.svg", cancellation.Token);
+        image.EnsureSuccessStatusCode();
+        Assert.Equal("image/svg+xml", image.Content.Headers.ContentType?.MediaType);
     }
 
     [Fact]
@@ -202,6 +213,9 @@ public sealed class ScriptedRunHttpTests(P4ApiFactory application)
         Assert.True(paths.TryGetProperty("/api/v1/runs", out _));
         Assert.True(paths.TryGetProperty("/api/v1/runs/{runId}/turns", out _));
         Assert.True(paths.TryGetProperty("/api/v1/runs/{runId}/replay", out _));
+        Assert.True(paths.TryGetProperty("/api/v1/certifications", out _));
+        Assert.True(paths.TryGetProperty("/api/v1/comparisons", out _));
+        Assert.True(paths.TryGetProperty("/api/v1/runs/{runId}/share", out _));
     }
 
     private static async Task<string> StartSessionAsync(

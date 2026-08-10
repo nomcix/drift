@@ -16,7 +16,7 @@ namespace DirectiveDrift.Persistence;
 
 public sealed class EfGameRepository(
     IDbContextFactory<GameDbContext> contextFactory,
-    TimeProvider timeProvider) : IGameRepository, IDecisionCheckpointStore
+    TimeProvider timeProvider) : IGameRepository, IMasteryRepository, IDecisionCheckpointStore
 {
     private static readonly JsonSerializerOptions StorageJson = CreateStorageJson();
 
@@ -223,6 +223,10 @@ public sealed class EfGameRepository(
             StateHash = stateHash,
             ProviderProfileId = preparedRun.ProviderProfileId,
             ScriptedPlanJson = SerializePlan(preparedRun.ScriptedPlan),
+            Kind = (int)preparedRun.Kind,
+            Assisted = preparedRun.InitialState.Score.Assisted,
+            CertificationId = preparedRun.CertificationId,
+            VariantDisclosureJson = preparedRun.VariantDisclosureJson,
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -252,6 +256,305 @@ public sealed class EfGameRepository(
             entity => entity.Id == runId.Value && entity.OwnerId == ownerId,
             cancellationToken);
         return run is null ? null : ToSummary(run);
+    }
+
+    public async Task<CertificationSummary> CreateCertificationAsync(
+        string ownerId,
+        string certificationId,
+        string buildId,
+        int buildVersion,
+        string providerProfileId,
+        string missionContentVersion,
+        string rulesVersion,
+        string scoreVersion,
+        string certificationVersion,
+        IReadOnlyList<PreparedRun> runs,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
+        if (runs.Count != 3
+            || runs.Select(run => run.InitialState.Mission.VariantId).Distinct().Count() != 3
+            || runs.Any(run => run.Kind != RunKind.Certification
+                || !string.Equals(run.CertificationId, certificationId, StringComparison.Ordinal)
+                || run.BuildId != buildId
+                || run.BuildVersion != buildVersion
+                || run.ProviderProfileId != providerProfileId))
+        {
+            throw new ArgumentException("A certification requires three distinct locked runs.", nameof(runs));
+        }
+
+        await using var database = await contextFactory.CreateDbContextAsync(cancellationToken);
+        await using var transaction = await database.Database.BeginTransactionAsync(cancellationToken);
+        var build = await database.BuildVersions
+            .Join(
+                database.Builds.Where(value => value.OwnerId == ownerId),
+                value => value.BuildId,
+                value => value.Id,
+                (value, _) => value)
+            .SingleAsync(
+                value => value.BuildId == buildId && value.Version == buildVersion,
+                cancellationToken);
+        build.HasBeenUsed = true;
+        database.Certifications.Add(new CertificationEntity
+        {
+            Id = certificationId,
+            OwnerId = ownerId,
+            Status = "active",
+            BuildId = buildId,
+            BuildVersion = buildVersion,
+            ProviderProfileId = providerProfileId,
+            MissionContentVersion = missionContentVersion,
+            RulesVersion = rulesVersion,
+            ScoreVersion = scoreVersion,
+            CertificationVersion = certificationVersion,
+            CreatedAt = now,
+        });
+
+        for (var slot = 0; slot < runs.Count; slot++)
+        {
+            var prepared = runs[slot];
+            var stateHash = CanonicalStateSerializer.Hash(prepared.InitialState);
+            var entity = new RunEntity
+            {
+                Id = prepared.RunId.Value,
+                OwnerId = ownerId,
+                BuildId = buildId,
+                BuildVersion = buildVersion,
+                MissionId = prepared.InitialState.Mission.MissionId.Value,
+                VariantId = prepared.InitialState.Mission.VariantId.Value,
+                Turn = prepared.InitialState.Turn,
+                Status = (int)prepared.InitialState.Status,
+                StateHash = stateHash,
+                ProviderProfileId = providerProfileId,
+                ScriptedPlanJson = SerializePlan(prepared.ScriptedPlan),
+                Kind = (int)RunKind.Certification,
+                Assisted = false,
+                CertificationId = certificationId,
+                VariantDisclosureJson = prepared.VariantDisclosureJson,
+                CreatedAt = now,
+                UpdatedAt = now,
+            };
+            database.Runs.Add(entity);
+            database.RunSnapshots.Add(new RunSnapshotEntity
+            {
+                RunId = entity.Id,
+                Turn = 0,
+                StateJson = CanonicalStateSerializer.Serialize(prepared.InitialState),
+                StateHash = stateHash,
+                CreatedAt = now,
+            });
+            database.DomainEvents.Add(ToEventEntity(entity.Id, prepared.InitialEvent));
+            database.CertificationRuns.Add(new CertificationRunEntity
+            {
+                CertificationId = certificationId,
+                RunId = entity.Id,
+                Slot = slot + 1,
+            });
+        }
+
+        await database.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return (await GetCertificationAsync(ownerId, certificationId, cancellationToken))!;
+    }
+
+    public async Task<CertificationSummary?> GetCertificationAsync(
+        string ownerId,
+        string certificationId,
+        CancellationToken cancellationToken)
+    {
+        await using var database = await contextFactory.CreateDbContextAsync(cancellationToken);
+        var certificate = await database.Certifications.AsNoTracking().SingleOrDefaultAsync(
+            value => value.Id == certificationId && value.OwnerId == ownerId,
+            cancellationToken);
+        if (certificate is null)
+        {
+            return null;
+        }
+
+        var rows = await database.CertificationRuns.AsNoTracking()
+            .Where(value => value.CertificationId == certificationId)
+            .Join(database.Runs.AsNoTracking(), value => value.RunId, value => value.Id, (link, run) => new { link.Slot, Run = run })
+            .OrderBy(value => value.Slot)
+            .ToArrayAsync(cancellationToken);
+        var revealed = !string.Equals(certificate.Status, "active", StringComparison.Ordinal);
+        var successes = rows.Count(value => (RunStatus)value.Run.Status == RunStatus.Succeeded);
+        return new CertificationSummary(
+            certificate.Id,
+            certificate.BuildId,
+            certificate.BuildVersion,
+            certificate.ProviderProfileId,
+            certificate.MissionContentVersion,
+            certificate.RulesVersion,
+            certificate.ScoreVersion,
+            certificate.CertificationVersion,
+            certificate.Status,
+            successes,
+            revealed,
+            string.Equals(certificate.Status, "passed", StringComparison.Ordinal)
+                ? ["robust-build"]
+                : [],
+            certificate.CreatedAt,
+            certificate.CompletedAt,
+            rows.Select(value => new CertificationRunSummary(
+                value.Slot,
+                new RunId(value.Run.Id),
+                (RunStatus)value.Run.Status,
+                (RunStatus)value.Run.Status == RunStatus.Active
+                    ? null
+                    : (RunStatus)value.Run.Status == RunStatus.Succeeded,
+                revealed ? value.Run.VariantDisclosureJson : null)).ToImmutableArray());
+    }
+
+    public async Task<bool> HasCertificationEligibilityAsync(
+        string ownerId,
+        string buildId,
+        int buildVersion,
+        string providerProfileId,
+        CancellationToken cancellationToken)
+    {
+        await using var database = await contextFactory.CreateDbContextAsync(cancellationToken);
+        var distinctVariants = await database.Runs.AsNoTracking()
+            .Where(value => value.OwnerId == ownerId
+                && value.BuildId == buildId
+                && value.BuildVersion == buildVersion
+                && value.ProviderProfileId == providerProfileId
+                && value.Kind == (int)RunKind.Practice
+                && !value.Assisted
+                && value.Status == (int)RunStatus.Succeeded)
+            .Select(value => value.VariantId)
+            .Distinct()
+            .CountAsync(cancellationToken);
+        return distinctVariants >= 3;
+    }
+
+    public async Task<RunComparison?> GetComparisonAsync(
+        string ownerId,
+        RunId leftRunId,
+        RunId rightRunId,
+        CancellationToken cancellationToken)
+    {
+        await using var database = await contextFactory.CreateDbContextAsync(cancellationToken);
+        var runs = await database.Runs.AsNoTracking()
+            .Where(value => value.OwnerId == ownerId
+                && (value.Id == leftRunId.Value || value.Id == rightRunId.Value))
+            .ToArrayAsync(cancellationToken);
+        if (runs.Length != 2 || runs.Any(value => value.Kind == (int)RunKind.Certification && value.CertificationId != null))
+        {
+            return null;
+        }
+
+        var left = runs.Single(value => value.Id == leftRunId.Value);
+        var right = runs.Single(value => value.Id == rightRunId.Value);
+        if (left.Assisted || right.Assisted)
+        {
+            return null;
+        }
+
+        var builds = await database.BuildVersions.AsNoTracking()
+            .Where(value => value.BuildId == left.BuildId && value.Version == left.BuildVersion
+                || value.BuildId == right.BuildId && value.Version == right.BuildVersion)
+            .ToArrayAsync(cancellationToken);
+        var leftBuild = builds.Single(value => value.BuildId == left.BuildId && value.Version == left.BuildVersion);
+        var rightBuild = builds.Single(value => value.BuildId == right.BuildId && value.Version == right.BuildVersion);
+        var decisions = await database.DecisionRecords.AsNoTracking()
+            .Where(value => value.RunId == left.Id || value.RunId == right.Id)
+            .OrderBy(value => value.Turn).ThenBy(value => value.AgentId)
+            .ToArrayAsync(cancellationToken);
+        var leftDecisions = decisions.Where(value => value.RunId == left.Id)
+            .ToDictionary(value => (value.Turn, value.AgentId), value => value.ActionId);
+        var rightDecisions = decisions.Where(value => value.RunId == right.Id)
+            .ToDictionary(value => (value.Turn, value.AgentId), value => value.ActionId);
+        var first = leftDecisions.Keys.Union(rightDecisions.Keys)
+            .OrderBy(value => value.Turn).ThenBy(value => value.AgentId, StringComparer.Ordinal)
+            .Select(key => new { key, Left = leftDecisions.GetValueOrDefault(key), Right = rightDecisions.GetValueOrDefault(key) })
+            .FirstOrDefault(value => !string.Equals(value.Left, value.Right, StringComparison.Ordinal));
+        var buildDifference = CompareBuildJson(leftBuild.CanonicalJson, rightBuild.CanonicalJson);
+        var costs = await database.UsageLedger.AsNoTracking()
+            .Where(value => value.RunId == left.Id || value.RunId == right.Id)
+            .GroupBy(value => value.RunId)
+            .Select(group => new { RunId = group.Key, Cost = group.Sum(value => value.ActualCostMicros) })
+            .ToDictionaryAsync(value => value.RunId, value => value.Cost, cancellationToken);
+        return new RunComparison(
+            ToSummary(left),
+            ToSummary(right),
+            buildDifference,
+            first is null ? null : new DecisionDifference(first.key.Turn, new AgentId(first.key.AgentId), first.Left, first.Right),
+            await ScoreAsync(database, left.Id, cancellationToken),
+            await ScoreAsync(database, right.Id, cancellationToken),
+            costs.GetValueOrDefault(left.Id),
+            costs.GetValueOrDefault(right.Id));
+    }
+
+    public async Task<PlayerUsageAllowance> GetUsageAllowanceAsync(
+        string ownerId,
+        int dailyLimitMicros,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
+        await using var database = await contextFactory.CreateDbContextAsync(cancellationToken);
+        var day = new DateTimeOffset(now.UtcDateTime.Date, TimeSpan.Zero);
+        var entries = await database.UsageLedger.AsNoTracking()
+            .Where(value => value.OwnerId == ownerId)
+            .ToArrayAsync(cancellationToken);
+        var used = entries.Where(value => value.CreatedAt >= day)
+            .Sum(value => value.Status == "settled" ? value.ActualCostMicros : value.ReservedCostMicros);
+        return new PlayerUsageAllowance(dailyLimitMicros, used, Math.Max(0, dailyLimitMicros - used), int.MaxValue);
+    }
+
+    public async Task<InternalRunDiagnostics?> GetRunDiagnosticsAsync(
+        string ownerId,
+        RunId runId,
+        CancellationToken cancellationToken)
+    {
+        await using var database = await contextFactory.CreateDbContextAsync(cancellationToken);
+        if (!await database.Runs.AnyAsync(value => value.Id == runId.Value && value.OwnerId == ownerId, cancellationToken))
+        {
+            return null;
+        }
+        var rows = await database.UsageLedger.AsNoTracking().Where(value => value.RunId == runId.Value).ToArrayAsync(cancellationToken);
+        var attempts = await database.ProviderDecisionCheckpoints.AsNoTracking()
+            .Where(value => database.TurnOperations.Where(operation => operation.RunId == runId.Value).Select(operation => operation.Id).Contains(value.OperationId))
+            .SumAsync(value => value.AttemptCount, cancellationToken);
+        return new InternalRunDiagnostics(
+            runId,
+            rows.Sum(value => value.ActualInputTokens),
+            rows.Sum(value => value.ActualOutputTokens),
+            rows.Sum(value => value.ActualCostMicros),
+            attempts);
+    }
+
+    public async Task<RunSummary?> ApplyEmergencyBurstAsync(
+        string ownerId,
+        RunId runId,
+        string text,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
+        await using var database = await contextFactory.CreateDbContextAsync(cancellationToken);
+        await using var transaction = await database.Database.BeginTransactionAsync(cancellationToken);
+        var run = await database.Runs.SingleOrDefaultAsync(value => value.Id == runId.Value && value.OwnerId == ownerId, cancellationToken);
+        if (run is null)
+        {
+            return null;
+        }
+        if (run.Kind != (int)RunKind.Practice || run.Assisted
+            || await database.TurnOperations.AnyAsync(value => value.RunId == run.Id && (value.Status == 0 || value.Status == 1), cancellationToken))
+        {
+            throw new ResourceConflictException(
+                "Emergency Burst is unavailable for this run.",
+                new InvalidOperationException("Run is not eligible for intervention."));
+        }
+        var snapshot = await database.RunSnapshots.SingleAsync(value => value.RunId == run.Id && value.Turn == run.Turn, cancellationToken);
+        var intervention = RunIntervention.ApplyEmergencyBurst(CanonicalStateSerializer.Deserialize(snapshot.StateJson), text);
+        snapshot.StateJson = CanonicalStateSerializer.Serialize(intervention.State);
+        snapshot.StateHash = intervention.StateHash;
+        run.StateHash = intervention.StateHash;
+        run.Assisted = true;
+        run.UpdatedAt = now;
+        database.DomainEvents.AddRange(intervention.Events.Select(value => ToEventEntity(run.Id, value)));
+        await database.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return ToSummary(run);
     }
 
     public async Task<EnqueueTurnResult?> EnqueueTurnAsync(
@@ -443,6 +746,7 @@ public sealed class EfGameRepository(
         run.Turn = result.State.Turn;
         run.Status = (int)result.State.Status;
         run.StateHash = result.StateHash;
+        run.Assisted = result.State.Score.Assisted;
         run.UpdatedAt = now;
         operationEntity.Status = (int)TurnOperationStatus.Succeeded;
         operationEntity.LeaseExpiresAtUnixMilliseconds = null;
@@ -478,6 +782,22 @@ public sealed class EfGameRepository(
         usage.ActualCostMicros = settlement.CostMicros;
         usage.Status = "settled";
         usage.UpdatedAt = now;
+        var certification = await database.Certifications.SingleOrDefaultAsync(
+            value => value.Id == run.CertificationId,
+            cancellationToken);
+        if (certification is not null && result.State.Status != RunStatus.Active)
+        {
+            var linkedStatuses = await database.CertificationRuns
+                .Where(value => value.CertificationId == certification.Id && value.RunId != run.Id)
+                .Join(database.Runs, value => value.RunId, value => value.Id, (_, value) => value.Status)
+                .ToArrayAsync(cancellationToken);
+            var statuses = linkedStatuses.Append((int)result.State.Status).ToArray();
+            if (statuses.All(value => value != (int)RunStatus.Active))
+            {
+                certification.Status = statuses.Count(value => value == (int)RunStatus.Succeeded) >= 2 ? "passed" : "failed";
+                certification.CompletedAt = now;
+            }
+        }
         await database.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
@@ -648,7 +968,46 @@ public sealed class EfGameRepository(
             (RunStatus)entity.Status,
             entity.StateHash,
             entity.CreatedAt,
-            entity.UpdatedAt);
+            entity.UpdatedAt,
+            entity.ProviderProfileId,
+            (RunKind)entity.Kind,
+            entity.Assisted,
+            entity.CertificationId,
+            entity.VariantDisclosureJson);
+
+    private static async Task<int> ScoreAsync(GameDbContext database, string runId, CancellationToken cancellationToken)
+    {
+        var terminal = await database.DomainEvents.AsNoTracking()
+            .Where(value => value.RunId == runId && value.EventType == nameof(CanonicalEventType.MissionSucceeded))
+            .Select(value => value.EventJson)
+            .SingleOrDefaultAsync(cancellationToken);
+        return terminal is null ? 0 : ((MissionTerminalPayload)DeserializeEvent(terminal).Payload).Score ?? 0;
+    }
+
+    private static BuildDifference CompareBuildJson(string leftJson, string rightJson)
+    {
+        using var left = JsonDocument.Parse(leftJson);
+        using var right = JsonDocument.Parse(rightJson);
+        var leftRoot = left.RootElement;
+        var rightRoot = right.RootElement;
+        var ids = leftRoot.GetProperty("agents").EnumerateObject().Select(value => value.Name)
+            .Union(rightRoot.GetProperty("agents").EnumerateObject().Select(value => value.Name), StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal).ToArray();
+        var role = ImmutableArray.CreateBuilder<AgentId>();
+        var cards = ImmutableArray.CreateBuilder<AgentId>();
+        var modules = ImmutableArray.CreateBuilder<AgentId>();
+        foreach (var id in ids)
+        {
+            var leftAgent = leftRoot.GetProperty("agents").GetProperty(id);
+            var rightAgent = rightRoot.GetProperty("agents").GetProperty(id);
+            if (leftAgent.GetProperty("roleOrder").GetString() != rightAgent.GetProperty("roleOrder").GetString()) role.Add(new AgentId(id));
+            if (leftAgent.GetProperty("briefingCardIds").GetRawText() != rightAgent.GetProperty("briefingCardIds").GetRawText()) cards.Add(new AgentId(id));
+            if (leftAgent.GetProperty("moduleId").GetString() != rightAgent.GetProperty("moduleId").GetString()) modules.Add(new AgentId(id));
+        }
+        return new BuildDifference(
+            leftRoot.GetProperty("sharedDoctrine").GetString() != rightRoot.GetProperty("sharedDoctrine").GetString(),
+            role.ToImmutable(), cards.ToImmutable(), modules.ToImmutable());
+    }
 
     private static TurnOperationSummary ToSummary(TurnOperationEntity entity) =>
         new(

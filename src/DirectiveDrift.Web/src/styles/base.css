@@ -164,9 +164,13 @@ input, select { height: 44px; padding: 0 10px; font-size: var(--type-control); }
 .run-preview-button { height: 44px; padding: 0 18px; border: 1px solid var(--line); color: var(--kite); background: transparent; cursor: pointer; font-size: var(--type-control); font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
 .save-confirmation { margin: 12px 20px 0; color: var(--power); font-size: var(--type-secondary); }
 .save-confirmation code { color: var(--text); }
+.practice-selector { grid-column: 1 / -1; display: grid; gap: 7px; margin: 0 20px 18px; color: var(--text-muted); font: var(--type-micro) ui-monospace, monospace; letter-spacing: .08em; text-transform: uppercase; }
+.practice-selector select { min-height: 42px; border: 1px solid var(--line); color: var(--text); background: #07111b; padding: 0 12px; }
 
 /* P6 station operations presentation */
 .run-shell { min-height: 100vh; overflow-x: hidden; background: radial-gradient(circle at 50% 42%, #0b2030, transparent 46rem), #02050b; }
+.mastery-actions { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line-dim); }
+.mastery-actions h3, .mastery-actions p { margin: 0; }.mastery-actions a { color: var(--power); }.mastery-actions small { color: var(--text-muted); }.mastery-warning { color: #ffb49d; }
 .operation-banner { display: flex; align-items: center; gap: 18px; min-height: 58px; margin: 12px 24px -8px; padding: 8px 14px; border: 1px solid var(--line-dim); background: #07111b; }.operation-banner > div { display: grid; gap: 2px; flex: 1; }.operation-banner span { color: var(--text-muted); font-size: var(--type-label); }.operation-banner button, .diagnostic-signals button { min-height: 38px; padding: 0 14px; border: 1px solid var(--kite); color: var(--text); background: #0b2736; cursor: pointer; }.operation-banner p { margin: 0; color: #ffb49d; }.operation-complete { border-color: #496c58; }.operation-error { border-color: #8c4c3c; }
 .run-topbar { height: 70px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 24px; margin: 0 24px; border: 1px solid var(--line-dim); border-top: 2px solid var(--kite); background: #07111b; }
 .run-topbar > div:nth-child(2) { text-align: center; }

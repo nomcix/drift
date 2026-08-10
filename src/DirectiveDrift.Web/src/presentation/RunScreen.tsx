@@ -40,8 +40,9 @@ function readStored(key: string): unknown {
   try { return JSON.parse(raw) as unknown; } catch { return null; }
 }
 
-export function RunScreen({ build = toBuildDocument(initialDraft), onReturn, onRevise = () => undefined }: {
+export function RunScreen({ build = toBuildDocument(initialDraft), variantId = "cs-practice-01", onReturn, onRevise = () => undefined }: {
   readonly build?: BuildDocument;
+  readonly variantId?: string;
   readonly onReturn: () => void;
   readonly onRevise?: () => void;
 }) {
@@ -161,7 +162,7 @@ export function RunScreen({ build = toBuildDocument(initialDraft), onReturn, onR
       }
       window.localStorage.setItem(buildKey, JSON.stringify({ buildId: submitted.buildId, version: submitted.version, hasSync } satisfies SavedBuild));
       window.localStorage.setItem(activeBuildKey, JSON.stringify(submitted));
-      const created = await startRun(submitted.buildId, submitted.version);
+      const created = await startRun(submitted.buildId, submitted.version, variantId);
       setRun(created);
       const saved = { runId: created.runId.value };
       window.localStorage.setItem(activeRunKey, JSON.stringify(saved));
@@ -200,7 +201,7 @@ export function RunScreen({ build = toBuildDocument(initialDraft), onReturn, onR
         <section><h3>Shared doctrine</h3><p>{displayedBuild.sharedDoctrine}</p></section>
         <AgentRail agentId="kite" health={playback.state.agents.kite.health} room={playback.state.agents.kite.roomId} />
         <AgentRail agentId="wren" health={playback.state.agents.wren.health} room={playback.state.agents.wren.roomId} />
-        {terminal ? <section className="run-summary"><h3>Run summary</h3><p>Result <strong>{run.status === 1 ? "Success" : "Failure"}</strong></p><p>Score <strong>{score ?? "—"}</strong></p><p>State hash <code>{run.stateHash.slice(0, 12)}</code></p></section> : null}
+        {terminal ? <><section className="run-summary"><h3>Run summary</h3><p>Result <strong>{run.status === 1 ? "Success" : "Failure"}</strong></p><p>Score <strong>{score ?? "—"}</strong></p><p>State hash <code>{run.stateHash.slice(0, 12)}</code></p></section><MasteryActions runId={run.runId.value} assisted={run.assisted === true} /></> : null}
       </aside>
 
       <section className="map-stage" aria-labelledby="map-stage-title">
@@ -230,6 +231,15 @@ export function RunScreen({ build = toBuildDocument(initialDraft), onReturn, onR
     </main>
     <AccessibleStationState presentation={stationPresentation} state={playback.state} lens={lens} />
   </div>;
+}
+
+function MasteryActions({ runId, assisted }: { readonly runId: string; readonly assisted: boolean }) {
+  return <section className="mastery-actions" aria-labelledby="mastery-title">
+    <p className="eyebrow">Mastery loop</p><h3 id="mastery-title">Revise, compare, certify</h3>
+    {assisted ? <p className="mastery-warning">Emergency Burst used · this run cannot count toward certification or comparison.</p> : <p>Successful runs on three distinct practice variants unlock a hidden three-run certification. The exact build and official profile lock for all three.</p>}
+    <a href={`/api/v1/runs/${runId}/share-card.svg`} target="_blank" rel="noreferrer">Open safe share card</a>
+    <small>Share output excludes role text, messages, provider details, and unrevealed certification truth.</small>
+  </section>;
 }
 
 function AgentRail({ agentId, health, room }: { readonly agentId: "kite" | "wren"; readonly health: number; readonly room: string }) {

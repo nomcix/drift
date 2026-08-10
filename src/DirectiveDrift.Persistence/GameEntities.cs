@@ -38,6 +38,10 @@ public sealed class RunEntity
     public required string StateHash { get; set; }
     public required string ProviderProfileId { get; set; }
     public required string ScriptedPlanJson { get; set; }
+    public int Kind { get; set; }
+    public bool Assisted { get; set; }
+    public string? CertificationId { get; set; }
+    public string? VariantDisclosureJson { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 }
@@ -110,12 +114,22 @@ public sealed class CertificationEntity
     public required string Id { get; set; }
     public required string OwnerId { get; set; }
     public required string Status { get; set; }
+    public required string BuildId { get; set; }
+    public int BuildVersion { get; set; }
+    public required string ProviderProfileId { get; set; }
+    public required string MissionContentVersion { get; set; }
+    public required string RulesVersion { get; set; }
+    public required string ScoreVersion { get; set; }
+    public required string CertificationVersion { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset? CompletedAt { get; set; }
 }
 
 public sealed class CertificationRunEntity
 {
     public required string CertificationId { get; set; }
     public required string RunId { get; set; }
+    public int Slot { get; set; }
 }
 
 public sealed class UsageLedgerEntity

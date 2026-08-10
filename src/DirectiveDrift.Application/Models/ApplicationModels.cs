@@ -35,7 +35,16 @@ public sealed record PreparedRun(
     RunState InitialState,
     CanonicalEvent InitialEvent,
     ImmutableDictionary<int, ImmutableDictionary<AgentId, ActionId>> ScriptedPlan,
-    string ProviderProfileId);
+    string ProviderProfileId,
+    RunKind Kind = RunKind.Practice,
+    string? CertificationId = null,
+    string? VariantDisclosureJson = null);
+
+public enum RunKind
+{
+    Practice,
+    Certification,
+}
 
 public sealed record RunSummary(
     RunId RunId,
@@ -47,7 +56,71 @@ public sealed record RunSummary(
     RunStatus Status,
     string StateHash,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    string ProviderProfileId,
+    RunKind Kind,
+    bool Assisted,
+    string? CertificationId,
+    string? VariantDisclosureJson);
+
+public sealed record CertificationRunSummary(
+    int Slot,
+    RunId RunId,
+    RunStatus Status,
+    bool? Succeeded,
+    string? VariantDisclosureJson);
+
+public sealed record CertificationSummary(
+    string CertificationId,
+    string BuildId,
+    int BuildVersion,
+    string ProviderProfileId,
+    string MissionContentVersion,
+    string RulesVersion,
+    string ScoreVersion,
+    string CertificationVersion,
+    string Status,
+    int Successes,
+    bool Revealed,
+    ImmutableArray<string> Badges,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? CompletedAt,
+    ImmutableArray<CertificationRunSummary> Runs);
+
+public sealed record DecisionDifference(
+    int Turn,
+    AgentId AgentId,
+    string? LeftActionId,
+    string? RightActionId);
+
+public sealed record BuildDifference(
+    bool SharedDoctrineChanged,
+    ImmutableArray<AgentId> RoleOrdersChanged,
+    ImmutableArray<AgentId> BriefingLoadoutsChanged,
+    ImmutableArray<AgentId> ModulesChanged);
+
+public sealed record RunComparison(
+    RunSummary Left,
+    RunSummary Right,
+    BuildDifference Build,
+    DecisionDifference? FirstDifferingDecision,
+    int LeftScore,
+    int RightScore,
+    int LeftCostMicros,
+    int RightCostMicros);
+
+public sealed record PlayerUsageAllowance(
+    int DailyLimitMicros,
+    int UsedMicros,
+    int RemainingMicros,
+    int ScriptedRunsRemaining);
+
+public sealed record InternalRunDiagnostics(
+    RunId RunId,
+    int InputTokens,
+    int OutputTokens,
+    int CostMicros,
+    int ProviderAttempts);
 
 public sealed record TurnOperationSummary(
     string OperationId,

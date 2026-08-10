@@ -9,6 +9,7 @@ using DirectiveDrift.Content.Loading;
 using DirectiveDrift.Content.Materialization;
 using DirectiveDrift.Content.Solving;
 using DirectiveDrift.Content.Validation;
+using DirectiveDrift.Core.Events;
 using DirectiveDrift.Core.Model;
 using DirectiveDrift.Core.Serialization;
 using DirectiveDrift.Core.Simulation;
@@ -17,6 +18,8 @@ namespace DirectiveDrift.Api;
 
 public static class ApiEndpoints
 {
+    private static readonly JsonSerializerOptions WebJson = new(JsonSerializerDefaults.Web);
+
     public static IEndpointRouteBuilder MapDirectiveDriftApi(this IEndpointRouteBuilder endpoints)
     {
         var api = endpoints.MapGroup("/api/v1");
@@ -50,7 +53,19 @@ public static class ApiEndpoints
                 string.Equals(missionId, catalog.Mission.Authoring.MissionId, StringComparison.Ordinal)
                     ? Results.Ok(
                         catalog.Variants.PracticeVariants.Select(
-                            variant => new { variant.VariantId, variant.Label }))
+                            variant => new
+                            {
+                                variant.VariantId,
+                                variant.Label,
+                                Seed = (ulong?)null,
+                                variant.Mutations,
+                            }).Append(new
+                            {
+                                VariantId = "cs-practice-random",
+                                Label = "Safe random practice",
+                                Seed = (ulong?)0,
+                                Mutations = (IReadOnlyList<MutationDocument>)[],
+                            }))
                     : NotFound("mission-not-found"));
 
         api.MapPost("/builds", CreateBuildAsync);
@@ -91,7 +106,16 @@ public static class ApiEndpoints
                     GuestSessionMiddleware.Owner(context),
                     new RunId(runId),
                     token);
-                return run is null ? NotFound("run-not-found") : Results.Ok(run);
+                if (run is null)
+                {
+                    return NotFound("run-not-found");
+                }
+                var revealed = await IsRunRevealedAsync(
+                    context,
+                    run,
+                    context.RequestServices.GetRequiredService<IMasteryRepository>(),
+                    token);
+                return Results.Ok(ToPublicRun(run, revealed));
             });
         api.MapPost("/runs/{runId}/turns", EnqueueTurnAsync);
         api.MapGet(
@@ -109,20 +133,28 @@ public static class ApiEndpoints
                 return operation is null ? NotFound("operation-not-found") : Results.Ok(operation);
             });
         api.MapGet("/runs/{runId}/events", GetEventsAsync);
+        api.MapGet("/runs/{runId}/replay", GetReplayAsync);
+        api.MapPost("/runs/{runId}/emergency-burst", ApplyEmergencyBurstAsync);
+        api.MapPost("/certifications", StartCertificationAsync);
         api.MapGet(
-            "/runs/{runId}/replay",
-            async (
-                HttpContext context,
-                string runId,
-                IGameRepository repository,
-                CancellationToken token) =>
+            "/certifications/{certificationId}",
+            async (HttpContext context, string certificationId, IMasteryRepository repository, CancellationToken token) =>
             {
-                var replay = await repository.GetReplayAsync(
-                    GuestSessionMiddleware.Owner(context),
-                    new RunId(runId),
-                    token);
-                return replay is null ? NotFound("run-not-found") : Results.Ok(replay);
+                var certificate = await repository.GetCertificationAsync(
+                    GuestSessionMiddleware.Owner(context), certificationId, token);
+                return certificate is null ? NotFound("certification-not-found") : Results.Ok(certificate);
             });
+        api.MapGet("/comparisons", GetComparisonAsync);
+        api.MapGet(
+            "/usage-allowance",
+            async (HttpContext context, IMasteryRepository repository, IAgentDecisionProvider provider, TimeProvider timeProvider, CancellationToken token) =>
+                Results.Ok(await repository.GetUsageAllowanceAsync(
+                    GuestSessionMiddleware.Owner(context),
+                    provider.Profile.GuestDailyCostCapMicros,
+                    timeProvider.GetUtcNow(),
+                    token)));
+        api.MapGet("/runs/{runId}/share", GetShareAsync);
+        api.MapGet("/runs/{runId}/share-card.svg", GetShareCardAsync);
 
         return endpoints;
     }
@@ -241,71 +273,137 @@ public static class ApiEndpoints
             return NotFound("build-version-not-found");
         }
 
-        var variant = catalog.Variants.PracticeVariants.SingleOrDefault(
-            candidate => string.Equals(
-                candidate.VariantId,
-                request.VariantId,
-                StringComparison.Ordinal));
+        VariantDocument? variant;
+        ulong? randomSeed = null;
+        if (string.Equals(request.VariantId, "cs-practice-random", StringComparison.Ordinal))
+        {
+            randomSeed = BitConverter.ToUInt64(RandomNumberGenerator.GetBytes(sizeof(ulong)));
+            variant = ColdStartRandomMaterializer.Materialize(
+                catalog.Mission,
+                catalog.Variants,
+                randomSeed.Value).Variant;
+        }
+        else
+        {
+            variant = catalog.Variants.PracticeVariants.SingleOrDefault(
+                candidate => string.Equals(candidate.VariantId, request.VariantId, StringComparison.Ordinal));
+        }
         if (variant is null)
         {
             return NotFound("practice-variant-not-found");
         }
 
-        var buildDocument = ContractJson.Deserialize<BuildDocument>(build.CanonicalJson);
-        var modules = ColdStartMissionMaterializer.MapBuildModules(catalog.Mission, buildDocument);
-        var materialized = ColdStartMissionMaterializer.Materialize(catalog.Mission, variant, modules);
-        if (!materialized.IsValid)
-        {
-            return ValidationProblem(materialized.Errors);
-        }
-
-        var definition = materialized.Definition!;
-        var recon = definition.Agents.Single(agent => agent.Archetype == AgentArchetype.Recon);
-        var engineer = definition.Agents.Single(agent => agent.Archetype == AgentArchetype.Engineer);
-        var alphaAgentId = definition.ConsoleAlpha.InitialCondition == ConsoleCondition.Damaged
-            ? engineer.AgentId
-            : recon.AgentId;
-        var solution = ReferenceSolver.Solve(
-            definition,
-            new ReferencePolicyOptions(
-                alphaAgentId,
-                recon.AgentId,
-                MaximumTurns: 17,
-                RequireNoDamage: false));
-        if (!solution.Solved)
-        {
-            return Problem(
-                StatusCodes.Status500InternalServerError,
-                "content-invariant",
-                solution.Failure ?? "The scripted reference plan could not be created.");
-        }
-
-        var runId = new RunId(CreateId("run"));
-        var start = RunStartFactory.Create(
-            runId,
-            definition,
-            ReferenceSolver.ScriptedSeed,
-            ReferenceSolver.ScriptedStream);
-        var scriptedTurns = ScriptedKnowledgePlan.Apply(buildDocument, definition, solution.Turns);
-        var plan = scriptedTurns.ToImmutableDictionary(
-            turn => turn.Turn,
-            turn => turn.Decisions.ToImmutableDictionary(
-                decision => decision.AgentId,
-                decision => decision.ActionId));
-        var prepared = new PreparedRun(
-            runId,
-            build.BuildId,
-            build.Version,
-            start.State,
-            start.Event,
-            plan,
-            provider.ProfileId);
+        var prepared = PrepareRun(
+            catalog,
+            build,
+            variant,
+            provider.ProfileId,
+            RunKind.Practice,
+            null,
+            randomSeed);
         var created = await repository.CreateRunAsync(
             GuestSessionMiddleware.Owner(context),
             prepared,
             timeProvider.GetUtcNow(),
             cancellationToken);
-        return Results.Created($"/api/v1/runs/{runId.Value}", created);
+        return Results.Created($"/api/v1/runs/{prepared.RunId.Value}", ToPublicRun(created, true));
+    }
+
+    private static async Task<IResult> StartCertificationAsync(
+        HttpContext context,
+        StartCertificationRequest request,
+        ColdStartRuntimeCatalog catalog,
+        IGameRepository gameRepository,
+        IMasteryRepository masteryRepository,
+        IAgentDecisionProvider provider,
+        TimeProvider timeProvider,
+        CancellationToken cancellationToken)
+    {
+        var owner = GuestSessionMiddleware.Owner(context);
+        var build = await gameRepository.GetBuildVersionAsync(owner, request.BuildId, request.BuildVersion, cancellationToken);
+        if (build is null)
+        {
+            return NotFound("build-version-not-found");
+        }
+        if (!await masteryRepository.HasCertificationEligibilityAsync(
+                owner, request.BuildId, request.BuildVersion, provider.ProfileId, cancellationToken))
+        {
+            return Conflict("certification-ineligible", "Three successful unassisted practice variants are required.");
+        }
+
+        var certificationId = CreateId("cert");
+        var selected = catalog.Variants.CertificationVariants
+            .Select(value => new { Value = value, Key = RandomNumberGenerator.GetBytes(16) })
+            .OrderBy(value => Convert.ToHexString(value.Key), StringComparer.Ordinal)
+            .Take(3)
+            .Select(value => value.Value)
+            .ToArray();
+        var prepared = selected.Select(value => PrepareRun(
+            catalog, build, value, provider.ProfileId, RunKind.Certification, certificationId, null)).ToArray();
+        var mission = catalog.Mission.Authoring;
+        var certificate = await masteryRepository.CreateCertificationAsync(
+            owner,
+            certificationId,
+            build.BuildId,
+            build.Version,
+            provider.ProfileId,
+            mission.ContentVersion,
+            mission.RulesVersion,
+            mission.ScoreVersion,
+            catalog.Variants.CertificationVersion,
+            prepared,
+            timeProvider.GetUtcNow(),
+            cancellationToken);
+        return Results.Created($"/api/v1/certifications/{certificationId}", certificate);
+    }
+
+    private static PreparedRun PrepareRun(
+        ColdStartRuntimeCatalog catalog,
+        BuildVersionSnapshot build,
+        VariantDocument variant,
+        string providerProfileId,
+        RunKind kind,
+        string? certificationId,
+        ulong? randomSeed)
+    {
+        var buildDocument = ContractJson.Deserialize<BuildDocument>(build.CanonicalJson);
+        var modules = ColdStartMissionMaterializer.MapBuildModules(catalog.Mission, buildDocument);
+        var materialized = ColdStartMissionMaterializer.Materialize(catalog.Mission, variant, modules);
+        if (!materialized.IsValid)
+        {
+            throw new InvalidOperationException($"Variant materialization failed: {string.Join("; ", materialized.Errors)}");
+        }
+        var definition = materialized.Definition!;
+        var recon = definition.Agents.Single(agent => agent.Archetype == AgentArchetype.Recon);
+        var engineer = definition.Agents.Single(agent => agent.Archetype == AgentArchetype.Engineer);
+        var solution = ReferenceSolver.Solve(
+            definition,
+            new ReferencePolicyOptions(
+                definition.ConsoleAlpha.InitialCondition == ConsoleCondition.Damaged ? engineer.AgentId : recon.AgentId,
+                recon.AgentId,
+                MaximumTurns: 17,
+                RequireNoDamage: false));
+        if (!solution.Solved)
+        {
+            throw new InvalidOperationException(solution.Failure ?? "Scripted reference plan failed.");
+        }
+        var runId = new RunId(CreateId("run"));
+        var start = RunStartFactory.Create(runId, definition, ReferenceSolver.ScriptedSeed, ReferenceSolver.ScriptedStream);
+        var plan = ScriptedKnowledgePlan.Apply(buildDocument, definition, solution.Turns).ToImmutableDictionary(
+            turn => turn.Turn,
+            turn => turn.Decisions.ToImmutableDictionary(decision => decision.AgentId, decision => decision.ActionId));
+        var disclosure = JsonSerializer.Serialize(
+            new
+            {
+                variant.VariantId,
+                variant.Label,
+                Seed = randomSeed,
+                variant.Mutations,
+            },
+            WebJson);
+        return new PreparedRun(
+            runId, build.BuildId, build.Version, start.State, start.Event, plan,
+            providerProfileId, kind, certificationId, disclosure);
     }
 
     private static async Task<IResult> EnqueueTurnAsync(
@@ -356,14 +454,257 @@ public static class ApiEndpoints
         CancellationToken cancellationToken)
     {
         var boundedLimit = Math.Clamp(limit ?? 200, 1, 500);
+        var owner = GuestSessionMiddleware.Owner(context);
+        var run = await repository.GetRunAsync(owner, new RunId(runId), cancellationToken);
+        if (run is null)
+        {
+            return NotFound("run-not-found");
+        }
+        var revealed = await IsRunRevealedAsync(
+            context,
+            run,
+            context.RequestServices.GetRequiredService<IMasteryRepository>(),
+            cancellationToken);
         var events = await repository.GetEventsAsync(
-            GuestSessionMiddleware.Owner(context),
+            owner,
             new RunId(runId),
             afterSequence ?? -1,
             boundedLimit,
             cancellationToken);
-        return events is null ? NotFound("run-not-found") : Results.Ok(events);
+        if (events is null)
+        {
+            return NotFound("run-not-found");
+        }
+        var visibleEvents = revealed
+            ? events.Value.AsEnumerable()
+            : events.Value.Where(value => value.Type != CanonicalEventType.RunStarted);
+        return Results.Ok(visibleEvents);
     }
+
+    private static async Task<IResult> GetReplayAsync(
+        HttpContext context,
+        string runId,
+        IGameRepository repository,
+        IMasteryRepository masteryRepository,
+        CancellationToken cancellationToken)
+    {
+        var owner = GuestSessionMiddleware.Owner(context);
+        var run = await repository.GetRunAsync(owner, new RunId(runId), cancellationToken);
+        if (run is null)
+        {
+            return NotFound("run-not-found");
+        }
+        if (!await IsRunRevealedAsync(context, run, masteryRepository, cancellationToken))
+        {
+            return Conflict("certification-hidden", "Certification replay unlocks after all three runs finish.");
+        }
+        var replay = await repository.GetReplayAsync(owner, new RunId(runId), cancellationToken);
+        return replay is null ? NotFound("run-not-found") : Results.Ok(replay);
+    }
+
+    private static async Task<IResult> ApplyEmergencyBurstAsync(
+        HttpContext context,
+        string runId,
+        EmergencyBurstRequest request,
+        IMasteryRepository repository,
+        TimeProvider timeProvider,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var run = await repository.ApplyEmergencyBurstAsync(
+                GuestSessionMiddleware.Owner(context),
+                new RunId(runId),
+                request.Text,
+                timeProvider.GetUtcNow(),
+                cancellationToken);
+            return run is null ? NotFound("run-not-found") : Results.Ok(ToPublicRun(run, true));
+        }
+        catch (ArgumentException exception)
+        {
+            return Problem(StatusCodes.Status400BadRequest, "emergency-burst-invalid", exception.Message);
+        }
+        catch (ResourceConflictException exception)
+        {
+            return Conflict("emergency-burst-ineligible", exception.Message);
+        }
+    }
+
+    private static async Task<IResult> GetComparisonAsync(
+        HttpContext context,
+        string leftRunId,
+        string rightRunId,
+        IMasteryRepository repository,
+        CancellationToken cancellationToken)
+    {
+        var comparison = await repository.GetComparisonAsync(
+            GuestSessionMiddleware.Owner(context),
+            new RunId(leftRunId),
+            new RunId(rightRunId),
+            cancellationToken);
+        return comparison is null
+            ? NotFound("comparison-not-available")
+            : Results.Ok(new
+            {
+                Left = ToPublicRun(comparison.Left, true),
+                Right = ToPublicRun(comparison.Right, true),
+                comparison.Build,
+                comparison.FirstDifferingDecision,
+                comparison.LeftScore,
+                comparison.RightScore,
+            });
+    }
+
+    private static async Task<IResult> GetShareAsync(
+        HttpContext context,
+        string runId,
+        IGameRepository gameRepository,
+        IMasteryRepository masteryRepository,
+        CancellationToken cancellationToken)
+    {
+        var share = await CreateShareAsync(
+            context, runId, gameRepository, masteryRepository, cancellationToken);
+        return share.Result ?? Results.Ok(share.Value);
+    }
+
+    private static async Task<IResult> GetShareCardAsync(
+        HttpContext context,
+        string runId,
+        IGameRepository gameRepository,
+        IMasteryRepository masteryRepository,
+        CancellationToken cancellationToken)
+    {
+        var share = await CreateShareAsync(
+            context, runId, gameRepository, masteryRepository, cancellationToken);
+        if (share.Result is not null)
+        {
+            return share.Result;
+        }
+        var value = share.Value!;
+        var result = System.Net.WebUtility.HtmlEncode(value.Result);
+        var codename = System.Net.WebUtility.HtmlEncode(value.BuildCodename);
+        var decisive = System.Net.WebUtility.HtmlEncode(value.DecisiveEvent);
+        var svg = $"""
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Directive Drift share card">
+              <rect width="1200" height="630" fill="#071218"/>
+              <path d="M80 420H330L440 300H720L840 205H1120" fill="none" stroke="#55d6be" stroke-width="12"/>
+              <text x="80" y="105" fill="#8ca5b3" font-family="sans-serif" font-size="30">DIRECTIVE DRIFT</text>
+              <text x="80" y="185" fill="#f1f7f8" font-family="sans-serif" font-size="58" font-weight="700">{codename}</text>
+              <text x="80" y="270" fill="#55d6be" font-family="sans-serif" font-size="44">{result}</text>
+              <text x="80" y="550" fill="#c5d2d8" font-family="sans-serif" font-size="28">{decisive}</text>
+            </svg>
+            """;
+        return Results.Text(svg, "image/svg+xml");
+    }
+
+    private static async Task<(ShareResponse? Value, IResult? Result)> CreateShareAsync(
+        HttpContext context,
+        string runId,
+        IGameRepository gameRepository,
+        IMasteryRepository masteryRepository,
+        CancellationToken cancellationToken)
+    {
+        var owner = GuestSessionMiddleware.Owner(context);
+        var run = await gameRepository.GetRunAsync(owner, new RunId(runId), cancellationToken);
+        if (run is null)
+        {
+            return (null, NotFound("run-not-found"));
+        }
+        if (!await IsRunRevealedAsync(context, run, masteryRepository, cancellationToken))
+        {
+            return (null, Conflict("certification-hidden", "Share output unlocks after certification reveal."));
+        }
+        if (run.Status == RunStatus.Active)
+        {
+            return (null, Conflict("run-active", "Share output is available after the run completes."));
+        }
+        var replay = await gameRepository.GetReplayAsync(owner, run.RunId, cancellationToken);
+        var build = await gameRepository.GetBuildVersionAsync(owner, run.BuildId, run.BuildVersion, cancellationToken);
+        if (replay is null || build is null)
+        {
+            return (null, NotFound("run-not-found"));
+        }
+        var terminal = replay.Events.LastOrDefault(value => value.Type is CanonicalEventType.MissionSucceeded or CanonicalEventType.MissionFailed);
+        var score = terminal?.Payload is MissionTerminalPayload payload ? payload.Score : null;
+        var decisive = replay.Events.FirstOrDefault(value => value.Type is
+            CanonicalEventType.ConsoleSyncFailed or CanonicalEventType.AgentDamaged or CanonicalEventType.MissionSucceeded or CanonicalEventType.MissionFailed)?.Type.ToString()
+            ?? "Run completed";
+        using var buildJson = JsonDocument.Parse(build.CanonicalJson);
+        var buildCodename = buildJson.RootElement.GetProperty("name").GetString() ?? run.BuildId;
+        var icons = buildJson.RootElement.GetProperty("agents").EnumerateObject()
+            .OrderBy(value => value.Name, StringComparer.Ordinal)
+            .Select(value => value.Value.GetProperty("moduleId").GetString() ?? "module")
+            .Append("briefing-allocation")
+            .ToArray();
+        var badges = Badges(replay);
+        return (new ShareResponse(
+            buildCodename,
+            run.Status == RunStatus.Succeeded ? "Mission succeeded" : "Mission failed",
+            score,
+            icons,
+            decisive,
+            badges,
+            $"/api/v1/runs/{runId}/replay",
+            $"/api/v1/runs/{runId}/share-card.svg"), null);
+    }
+
+    private static string[] Badges(ReplayData replay)
+    {
+        if (replay.Run.Status != RunStatus.Succeeded)
+        {
+            return [];
+        }
+        var badges = new List<string>();
+        if (replay.Events.All(value => value.Type != CanonicalEventType.AgentDamaged)) badges.Add("no-damage");
+        if (replay.Events.All(value => value.Type != CanonicalEventType.ConsoleSyncFailed)) badges.Add("no-wasted-sync");
+        if (replay.Events.All(value => value.Type is not (CanonicalEventType.MessageQueued or CanonicalEventType.MessageDelivered))) badges.Add("silent-success");
+        return badges.ToArray();
+    }
+
+    private static async Task<bool> IsRunRevealedAsync(
+        HttpContext context,
+        RunSummary run,
+        IMasteryRepository repository,
+        CancellationToken cancellationToken)
+    {
+        if (run.Kind == RunKind.Practice || run.CertificationId is null)
+        {
+            return true;
+        }
+        var certification = await repository.GetCertificationAsync(
+            GuestSessionMiddleware.Owner(context), run.CertificationId, cancellationToken);
+        return certification?.Revealed == true;
+    }
+
+    private static object ToPublicRun(RunSummary run, bool revealed) => new
+    {
+        run.RunId,
+        run.BuildId,
+        run.BuildVersion,
+        run.MissionId,
+        Variant = revealed && run.VariantDisclosureJson is not null
+            ? JsonSerializer.Deserialize<JsonElement>(run.VariantDisclosureJson)
+            : (JsonElement?)null,
+        run.Turn,
+        run.Status,
+        run.StateHash,
+        run.CreatedAt,
+        run.UpdatedAt,
+        run.ProviderProfileId,
+        run.Kind,
+        run.Assisted,
+        run.CertificationId,
+    };
+
+    private sealed record ShareResponse(
+        string BuildCodename,
+        string Result,
+        int? Score,
+        IReadOnlyList<string> LoadoutIcons,
+        string DecisiveEvent,
+        IReadOnlyList<string> Badges,
+        string ReplayUrl,
+        string ImageUrl);
 
     private static (BuildDocument? Document, IReadOnlyList<ValidationError> Errors) ValidateBuild(
         string json,

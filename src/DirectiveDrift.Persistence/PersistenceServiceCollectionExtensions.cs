@@ -14,6 +14,8 @@ public static class PersistenceServiceCollectionExtensions
             (serviceProvider, options) => options.UseSqlite(
                 connectionStringFactory(serviceProvider)));
         services.AddSingleton<IGameRepository, EfGameRepository>();
+        services.AddSingleton<IMasteryRepository>(serviceProvider =>
+            (EfGameRepository)serviceProvider.GetRequiredService<IGameRepository>());
         services.AddSingleton<IDecisionCheckpointStore, EfGameRepository>();
         services.AddSingleton<IUsageReservationService, PersistentUsageReservationService>();
         return services;

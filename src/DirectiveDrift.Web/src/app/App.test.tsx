@@ -14,6 +14,18 @@ describe("P5 briefing workbench", () => {
     expect(screen.getByRole("heading", { level: 3, name: "Wren" })).toBeTruthy();
     expect(screen.getAllByText("4 / 4")).toHaveLength(2);
     expect(screen.getByText("Every required contract reaches at least one agent", { exact: false })).toBeTruthy();
+    expect(screen.getByRole("combobox", { name: "Practice variant" })).toBeTruthy();
+  });
+
+  it("offers fixed revealed practice variants and safe random materialization", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const selector = screen.getByRole("combobox", { name: "Practice variant" });
+
+    await user.selectOptions(selector, "cs-practice-random");
+
+    expect((selector as HTMLSelectElement).value).toBe("cs-practice-random");
+    expect(screen.getByRole("option", { name: /seed and mutations reveal at start/u })).toBeTruthy();
   });
 
   it("accounts for an omitted required card without forbidding a valid save", async () => {

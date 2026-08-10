@@ -4,6 +4,10 @@ namespace DirectiveDrift.Api;
 
 public sealed record StartRunRequest(string BuildId, int BuildVersion, string VariantId);
 
+public sealed record StartCertificationRequest(string BuildId, int BuildVersion);
+
+public sealed record EmergencyBurstRequest(string Text);
+
 public sealed record BuildVersionRequest(JsonElement Build);
 
 public sealed record RuntimeResponse(string ApiVersion, string ProviderMode, string StateSchemaVersion);

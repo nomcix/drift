@@ -3,6 +3,7 @@ using System;
 using DirectiveDrift.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DirectiveDrift.Persistence.Migrations
 {
     [DbContext(typeof(GameDbContext))]
-    partial class GameDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260810014342_P9Mastery")]
+    partial class P9Mastery
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.6");

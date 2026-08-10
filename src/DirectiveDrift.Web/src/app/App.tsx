@@ -27,11 +27,13 @@ export function App({ onSave = saveFixtureBuild }: { readonly onSave?: SaveBuild
   );
   const [draft, setDraft] = useState<BuildDraft>(initialDraft);
   const [savedBuild, setSavedBuild] = useState<BuildDocument | null>(null);
+  const [practiceVariant, setPracticeVariant] = useState("cs-practice-01");
   const summary = useMemo(() => knowledgeSummary(draft), [draft]);
   const errors = useMemo(() => validateDraft(draft), [draft]);
 
   if (screen === "run") return <RunScreen
     build={savedBuild ?? toBuildDocument(draft)}
+    variantId={practiceVariant}
     onReturn={() => { setScreen("workbench"); }}
     onRevise={() => { setDraft((current) => applyGuidedSyncRevision(current)); setSavedBuild(null); setScreen("workbench"); }}
   />;
@@ -126,6 +128,16 @@ export function App({ onSave = saveFixtureBuild }: { readonly onSave?: SaveBuild
             <span>Load a valid generic build that omits Wren's sync contract, then diagnose and revise it.</span>
             <button type="button" onClick={() => { setDraft(onboardingFailureDraft); setSavedBuild(null); }}>Load scripted failure</button>
           </aside>
+          <label className="practice-selector">Practice variant
+            <select value={practiceVariant} onChange={(event) => { setPracticeVariant(event.target.value); }}>
+              <option value="cs-practice-01">Split Warning · revealed</option>
+              <option value="cs-practice-02">Second Repair · revealed</option>
+              <option value="cs-practice-03">Rotated Watch · revealed</option>
+              <option value="cs-practice-04">Broken Intake · revealed</option>
+              <option value="cs-practice-05">Tight Window · revealed</option>
+              <option value="cs-practice-random">Safe random · seed and mutations reveal at start</option>
+            </select>
+          </label>
         </section>
 
         <section className="workbench" id="workbench" aria-labelledby="workbench-title">

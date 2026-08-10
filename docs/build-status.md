@@ -1,6 +1,6 @@
 # Directive Drift build status
 
-Last updated: 2026-08-09
+Last updated: 2026-08-10
 
 | Packet | Status | Evidence |
 |---|---|---|
@@ -14,7 +14,54 @@ Last updated: 2026-08-09
 | P6 — SVG map and presentation reducer | Complete | Semantic station SVG, trusted silhouettes, typed presentation fixtures, canonical-event reducer, ordered playback, gated lenses, accessible state, responsive context drawer, and powered/unpowered visual gates pass. |
 | P7 — Scripted end-to-end game | Complete | Generated-client guest bootstrap, immutable build revisions, durable operation polling/resume, paged canonical events, guided fail/revise/succeed onboarding, replay truth/diagnostics, and Playwright smoke gates pass. |
 | P8 — AI runtime, fake provider, and one live adapter | Complete | Private context/prompt assembly, strict decision validation/repair/fallback, fake failure modes, pinned OpenAI Responses adapter, concurrent calls, pre-dispatch SQLite budgets, durable checkpoints, usage/cost diagnostics, and leakage/cap/restart gates pass. |
-| P9+ | Not started | Practice/certification, comparison, sharing, and launch hardening remain deferred. |
+| P9 — Practice, certification, comparison, and sharing | Acceptance pending | Implementation and non-browser suites pass; OpenAPI regeneration and Playwright await permission to bind temporary localhost servers. |
+| P10+ | Not started | Product hardening, evaluation, accessibility audit, deployment, and launch remain deferred. |
+
+## P9 implementation status
+
+P9 adds the post-run mastery loop without changing the accepted build schema or
+two-agent roster contract. Fixed practice variants return their mutations;
+safe random practice uses the deterministic safe catalogue and reveals its
+generated seed and mutations at run creation. Emergency Burst is a Core-owned
+between-turn intervention that queues the same bounded message for both agents,
+consumes the remaining message budget, persists canonical queue events, and
+marks the run assisted.
+
+Certification requires three distinct successful, unassisted practice
+variants for the exact build version and current provider profile. Starting a
+certificate selects three server-held variants without replacement and creates
+all locked runs atomically. Active responses expose slot, run, and outcome
+status only. Run summaries omit variant disclosure, the `RunStarted` envelope
+is withheld, and replay/share remain locked until all three runs are terminal.
+The certificate passes only with at least two successes, then reveals the
+persisted selection and awards `robust-build`.
+
+Run comparison returns build allocation/text/module changes and the first
+differing decision in stable turn/agent order. Historical build versions remain
+available through the existing versions route. Completed-run share metadata
+and SVG contain only codename, result, score, module/allocation icons, factual
+decisive event, badges, and replay/image links; private orders, messages,
+provider details, and hidden certification truth are excluded. Player APIs
+receive allowance remaining rather than raw cost. Exact tokens, attempts, and
+cost micros remain in the internal repository diagnostic projection.
+
+### P9 schema, migration, and telemetry impact
+
+- Authored JSON Schemas and build contract version `1` are unchanged; ADR 0001
+  remains the accepted roster contract.
+- HTTP/OpenAPI adds certification, comparison, Emergency Burst, usage
+  allowance, practice disclosure, and safe share routes; TypeScript client
+  regeneration is the remaining acceptance gate.
+- EF migration `20260810014342_P9Mastery` advances persistence metadata to
+  version `3`; details are in `docs/migrations/0003-p9-mastery.md`.
+- No new analytics sink or raw authored/model text logging is introduced.
+
+### P9 deliberate omissions
+
+- No P10 evaluation matrix, mechanics iteration, accessibility audit, visual
+  regression/performance pass, security review, or usability study was begun.
+- No public gallery, account system, leaderboard, provider selector, second
+  mission, or additional provider profile was added.
 
 ## P8 implementation status
 

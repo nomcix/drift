@@ -44,11 +44,14 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : DbC
         modelBuilder.Entity<CertificationEntity>().HasKey(entity => entity.Id);
         modelBuilder.Entity<CertificationRunEntity>()
             .HasKey(entity => new { entity.CertificationId, entity.RunId });
+        modelBuilder.Entity<CertificationRunEntity>()
+            .HasIndex(entity => new { entity.CertificationId, entity.Slot })
+            .IsUnique();
         modelBuilder.Entity<UsageLedgerEntity>().HasKey(entity => entity.Id);
         modelBuilder.Entity<UsageLedgerEntity>().HasIndex(entity => entity.OperationId).IsUnique();
         modelBuilder.Entity<SchemaMetadataEntity>().HasKey(entity => entity.Key);
         modelBuilder.Entity<SchemaMetadataEntity>().HasData(
-            new SchemaMetadataEntity { Key = "schema-version", Value = "2" });
+            new SchemaMetadataEntity { Key = "schema-version", Value = "3" });
 
         modelBuilder.Entity<BuildEntity>()
             .HasOne<GuestProfileEntity>()
@@ -99,6 +102,11 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : DbC
             .HasOne<GuestProfileEntity>()
             .WithMany()
             .HasForeignKey(entity => entity.OwnerId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<CertificationEntity>()
+            .HasOne<BuildVersionEntity>()
+            .WithMany()
+            .HasForeignKey(entity => new { entity.BuildId, entity.BuildVersion })
             .OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<CertificationRunEntity>()
             .HasOne<CertificationEntity>()
