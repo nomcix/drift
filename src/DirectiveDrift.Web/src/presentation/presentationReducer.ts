@@ -13,10 +13,13 @@ function describeEvent(event: CanonicalPresentationEvent) {
     case "RepairContinued": return `repair continued at ${event.payload.roomId}`;
     case "PowerRestored": return "auxiliary power restored";
     case "ConsoleActivated": return `${event.payload.deviceId} activated`;
+    case "ConsoleSyncFailed": return "console activation missed the shared sync turn";
     case "ArchiveOpened": return "archive gate opened";
+    case "DroneMoved": return `security drone moved to ${event.payload.toRoomId}`;
     case "AgentDamaged": return `${event.payload.agentId} damaged by ${event.payload.source}`;
     case "RecorderPickedUp": return `${event.payload.agentId} secured the recorder`;
     case "MissionSucceeded": return `mission succeeded · score ${String(event.payload.score)}`;
+    case "MissionFailed": return "mission failed";
     case "TurnStarted": return `turn ${String(event.turn)} started`;
     case "TurnEnded": return `turn ${String(event.turn)} ended`;
   }
@@ -54,8 +57,12 @@ export function presentationReducer(state: PresentationState, event: CanonicalPr
       const activatedConsoles = appendUnique(state.activatedConsoles, [event.payload.deviceId]);
       return { ...base, activatedConsoles };
     }
+    case "ConsoleSyncFailed":
+      return base;
     case "ArchiveOpened":
       return { ...base, archiveOpen: true, objectives: { ...state.objectives, sync: "complete", recorder: "active" } };
+    case "DroneMoved":
+      return { ...base, droneRoomId: event.payload.toRoomId };
     case "AgentDamaged":
       return {
         ...base,
@@ -70,6 +77,8 @@ export function presentationReducer(state: PresentationState, event: CanonicalPr
       };
     case "MissionSucceeded":
       return { ...base, missionStatus: "succeeded", objectives: { power: "complete", sync: "complete", recorder: "complete", extract: "complete" } };
+    case "MissionFailed":
+      return { ...base, missionStatus: "failed" };
     case "TurnStarted":
     case "TurnEnded":
       return base;
@@ -92,6 +101,7 @@ const durations: Readonly<Partial<Record<CanonicalPresentationEvent["type"], num
   AgentDamaged: 450,
   RecorderPickedUp: 500,
   MissionSucceeded: 1800,
+  MissionFailed: 900,
 };
 
 export function animationIntent(event: CanonicalPresentationEvent, speed: 1 | 2): AnimationIntent {

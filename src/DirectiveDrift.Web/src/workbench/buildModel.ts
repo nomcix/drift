@@ -18,7 +18,7 @@ export type BuildDocument = {
   readonly buildId: string;
   readonly missionId: string;
   readonly name: string;
-  readonly version: 1;
+  readonly version: number;
   readonly sharedDoctrine: string;
   readonly agents: Readonly<Record<string, AgentBuild>>;
   readonly hypothesis: string | null;
@@ -43,6 +43,39 @@ export const initialDraft: BuildDraft = {
   hypothesis:
     "Kite will scout and hold Alpha while Wren restores power. They will agree on a sync turn, recover the recorder, and return together.",
 };
+
+export const onboardingFailureDraft: BuildDraft = {
+  ...initialDraft,
+  name: "First Light Tutorial",
+  sharedDoctrine: "Complete the mission optimally and efficiently. Communicate when useful.",
+  agents: {
+    kite: {
+      roleOrder: "Choose the best legal action to complete assigned goals. Avoid unnecessary risk.",
+      briefingCardIds: ["sync-contract", "recovery-contract", "kite-sensor-intel", "route-intel"],
+      moduleId: "signal-repeater",
+    },
+    wren: {
+      roleOrder: "Choose the best legal action to complete assigned goals. Avoid unnecessary risk.",
+      briefingCardIds: ["power-contract", "extraction-contract", "comms-intel", "repair-protocol"],
+      moduleId: "rapid-repair-kit",
+    },
+  },
+  hypothesis: "The generic instruction should be enough for both agents to coordinate.",
+};
+
+export function applyGuidedSyncRevision(draft: BuildDraft): BuildDraft {
+  const wren = draft.agents["wren"];
+  if (wren === undefined) return draft;
+  return {
+    ...draft,
+    name: "First Light Revised",
+    agents: {
+      ...draft.agents,
+      wren: { ...wren, briefingCardIds: ["power-contract", "sync-contract", "extraction-contract", "repair-protocol"] },
+    },
+    hypothesis: "Giving Wren the sync contract should let both consoles activate on the same turn.",
+  };
+}
 
 function containsForbiddenControlCharacter(value: string): boolean {
   return Array.from(value).some((character) => {

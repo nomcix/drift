@@ -11,6 +11,8 @@ TestResults/
 **/node_modules/
 src/DirectiveDrift.Web/dist/
 src/DirectiveDrift.Web/coverage/
+src/DirectiveDrift.Web/test-results/
+src/DirectiveDrift.Web/playwright-report/
 
 # Local configuration and data
 .env

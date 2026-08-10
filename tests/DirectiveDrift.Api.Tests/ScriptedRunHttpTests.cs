@@ -53,6 +53,7 @@ public sealed class ScriptedRunHttpTests(P4ApiFactory application)
 
         var turn = 0;
         string? firstOperationId = null;
+        JsonElement terminalRun = default;
         while (true)
         {
             using var runResponse = await ownerClient.GetAsync(
@@ -64,6 +65,7 @@ public sealed class ScriptedRunHttpTests(P4ApiFactory application)
             if (run.GetProperty("status").GetInt32() != 0)
             {
                 Assert.Equal(1, run.GetProperty("status").GetInt32());
+                terminalRun = run.Clone();
                 break;
             }
 
@@ -125,7 +127,66 @@ public sealed class ScriptedRunHttpTests(P4ApiFactory application)
         Assert.Equal(events.GetArrayLength(), replay.GetProperty("events").GetArrayLength());
         Assert.Equal(turn * 2, replay.GetProperty("decisions").GetArrayLength());
         Assert.Equal(0, replay.GetProperty("initialState").GetProperty("turn").GetInt32());
+        var succeeded = replay.GetProperty("events").EnumerateArray().Single(
+            value => value.GetProperty("type").GetInt32() == 26);
+        Assert.Equal(1330, succeeded.GetProperty("payload").GetProperty("score").GetInt32());
+        var finalTurn = replay.GetProperty("events").EnumerateArray().Last(
+            value => value.GetProperty("type").GetInt32() == 29);
+        Assert.Equal(
+            terminalRun.GetProperty("stateHash").GetString(),
+            finalTurn.GetProperty("payload").GetProperty("stateHash").GetString());
         Assert.False(string.IsNullOrWhiteSpace(firstOperationId));
+    }
+
+    [Fact]
+    public async Task GenericOnboardingBuildFailsWithConsoleSyncEvidence()
+    {
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromMinutes(3));
+        using var client = application.CreateClient();
+        var csrf = await StartSessionAsync(client, cancellation.Token);
+        var buildJson = await ReadBuildAsync("generic-optimal-build.json", cancellation.Token);
+        using var createBuild = await PostJsonAsync(
+            client, "/api/v1/builds", buildJson, csrf, null, cancellation.Token);
+        Assert.Equal(HttpStatusCode.Created, createBuild.StatusCode);
+        using var startRun = await PostJsonAsync(
+            client,
+            "/api/v1/runs",
+            "{\"buildId\":\"generic-optimal\",\"buildVersion\":1,\"variantId\":\"cs-practice-01\"}",
+            csrf,
+            null,
+            cancellation.Token);
+        var startBody = await startRun.Content.ReadAsStringAsync(cancellation.Token);
+        Assert.True(startRun.StatusCode == HttpStatusCode.Created, startBody);
+        var runId = JsonDocument.Parse(startBody).RootElement.GetProperty("runId").GetProperty("value").GetString()!;
+
+        for (var turn = 1; turn <= 18; turn++)
+        {
+            using var enqueue = await PostJsonAsync(
+                client,
+                $"/api/v1/runs/{runId}/turns",
+                "{}",
+                csrf,
+                $"generic-turn-{turn}",
+                cancellation.Token);
+            Assert.Equal(HttpStatusCode.Accepted, enqueue.StatusCode);
+            var operationId = JsonDocument.Parse(await enqueue.Content.ReadAsStringAsync(cancellation.Token))
+                .RootElement.GetProperty("operationId").GetString()!;
+            await WaitForOperationAsync(client, operationId, cancellation.Token);
+            using var runResponse = await client.GetAsync($"/api/v1/runs/{runId}", cancellation.Token);
+            var run = JsonDocument.Parse(await runResponse.Content.ReadAsStringAsync(cancellation.Token)).RootElement;
+            if (run.GetProperty("status").GetInt32() == 0)
+            {
+                continue;
+            }
+
+            Assert.Equal(2, run.GetProperty("status").GetInt32());
+            break;
+        }
+
+        using var replayResponse = await client.GetAsync($"/api/v1/runs/{runId}/replay", cancellation.Token);
+        var replay = JsonDocument.Parse(await replayResponse.Content.ReadAsStringAsync(cancellation.Token)).RootElement;
+        Assert.Contains(replay.GetProperty("events").EnumerateArray(), value => value.GetProperty("type").GetInt32() == 17);
+        Assert.DoesNotContain(replay.GetProperty("events").EnumerateArray(), value => value.GetProperty("type").GetInt32() == 26);
     }
 
     [Fact]
@@ -202,6 +263,11 @@ public sealed class ScriptedRunHttpTests(P4ApiFactory application)
     }
 
     private static async Task<string> ReadDesignedBuildAsync(CancellationToken cancellationToken)
+        => await ReadBuildAsync("designed-build.json", cancellationToken);
+
+    private static async Task<string> ReadBuildAsync(
+        string fileName,
+        CancellationToken cancellationToken)
     {
         var current = new DirectoryInfo(AppContext.BaseDirectory);
         while (current is not null && !File.Exists(Path.Combine(current.FullName, "DirectiveDrift.sln")))
@@ -211,8 +277,6 @@ public sealed class ScriptedRunHttpTests(P4ApiFactory application)
 
         var root = current?.FullName
             ?? throw new InvalidOperationException("Could not locate the repository test fixture root.");
-        return await File.ReadAllTextAsync(
-            Path.Combine(root, "examples/designed-build.json"),
-            cancellationToken);
+        return await File.ReadAllTextAsync(Path.Combine(root, "examples", fileName), cancellationToken);
     }
 }

@@ -55,6 +55,7 @@ button { color: inherit; }
 main { width: min(1440px, 100%); margin: 0 auto; }
 .eyebrow { margin: 0 0 8px; color: var(--text-muted); font: 700 var(--type-micro) ui-monospace, monospace; letter-spacing: .15em; text-transform: uppercase; }
 .mission-brief { position: relative; min-height: 315px; display: grid; grid-template-columns: minmax(330px, .85fr) minmax(410px, 1.15fr); gap: 48px; overflow: hidden; padding: 48px clamp(28px, 5vw, 72px) 42px; border-bottom: 1px solid var(--line-dim); }
+.onboarding-callout { position: relative; z-index: 2; grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 18px; padding: 14px 18px; border: 1px solid #855f32; background: #1c140cdd; }.onboarding-callout strong { color: var(--power); }.onboarding-callout span { color: var(--text-muted); }.onboarding-callout button { min-height: 40px; padding: 0 16px; border: 1px solid var(--power); color: #fff3d5; background: #3d2710; cursor: pointer; }
 .mission-copy { position: relative; z-index: 2; }
 h1, h2, h3, h4, p { margin-top: 0; }
 h1 { margin-bottom: 14px; color: var(--white); font-size: clamp(46px, 5vw, 74px); font-weight: 540; letter-spacing: -.055em; line-height: .9; }
@@ -166,6 +167,7 @@ input, select { height: 44px; padding: 0 10px; font-size: var(--type-control); }
 
 /* P6 station operations presentation */
 .run-shell { min-height: 100vh; overflow-x: hidden; background: radial-gradient(circle at 50% 42%, #0b2030, transparent 46rem), #02050b; }
+.operation-banner { display: flex; align-items: center; gap: 18px; min-height: 58px; margin: 12px 24px -8px; padding: 8px 14px; border: 1px solid var(--line-dim); background: #07111b; }.operation-banner > div { display: grid; gap: 2px; flex: 1; }.operation-banner span { color: var(--text-muted); font-size: var(--type-label); }.operation-banner button, .diagnostic-signals button { min-height: 38px; padding: 0 14px; border: 1px solid var(--kite); color: var(--text); background: #0b2736; cursor: pointer; }.operation-banner p { margin: 0; color: #ffb49d; }.operation-complete { border-color: #496c58; }.operation-error { border-color: #8c4c3c; }
 .run-topbar { height: 70px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 24px; margin: 0 24px; border: 1px solid var(--line-dim); border-top: 2px solid var(--kite); background: #07111b; }
 .run-topbar > div:nth-child(2) { text-align: center; }
 .run-topbar p, .run-topbar strong { margin: 0; }
@@ -181,6 +183,7 @@ input, select { height: 44px; padding: 0 10px; font-size: var(--type-control); }
 .turn-readout small { color: var(--text-muted); font: var(--type-micro) ui-monospace, monospace; }
 
 .operations-layout { width: auto; height: calc(100vh - 94px); min-height: 650px; display: grid; grid-template-columns: 228px minmax(0, 1fr) 248px; grid-template-rows: minmax(0, 1fr) 94px; gap: 0; margin: 20px 24px 0; border: 1px solid var(--line-dim); background: #030912; }
+.run-summary code { display: block; overflow-wrap: anywhere; color: var(--power); }.diagnostic-signals { border-color: #855f32 !important; background: #17120d !important; }.diagnostic-signals ul { padding-left: 18px; color: #f2d5aa; }.diagnostic-signals button { width: 100%; margin-top: 8px; border-color: var(--power); }
 .command-rail, .context-rail { min-width: 0; overflow: auto; padding: 24px 18px; background: linear-gradient(180deg, #0b1724, #07111b); scrollbar-color: var(--line) transparent; scrollbar-width: thin; }
 .command-rail::-webkit-scrollbar, .context-rail::-webkit-scrollbar { width: 7px; }
 .command-rail::-webkit-scrollbar-track, .context-rail::-webkit-scrollbar-track { background: transparent; }

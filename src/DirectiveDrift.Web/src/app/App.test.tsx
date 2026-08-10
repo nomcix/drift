@@ -80,11 +80,11 @@ describe("P5 briefing workbench", () => {
     expect(screen.getByText("Saved", { exact: false })).toBeTruthy();
   });
 
-  it("opens the P6 map showcase without changing the P5 build contract", async () => {
+  it("opens the P7 scripted run without changing the P5 build contract", async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: "Open map showcase" }));
+    await user.click(screen.getByRole("button", { name: "Execute scripted run" }));
     expect(screen.getByRole("heading", { level: 1, name: "Station operations map" })).toBeTruthy();
     expect(screen.getByRole("img", { name: "Cold Start station operations map" })).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Return to briefing workbench" }));

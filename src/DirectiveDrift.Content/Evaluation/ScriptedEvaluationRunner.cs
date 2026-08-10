@@ -13,8 +13,6 @@ namespace DirectiveDrift.Content.Evaluation;
 
 public static class ScriptedEvaluationRunner
 {
-    private static readonly BriefingCardId SyncCardId = new("sync-contract");
-
     public static EvaluationReport Run(
         ValidatedMission mission,
         ColdStartVariantCatalog catalog,
@@ -93,12 +91,10 @@ public static class ScriptedEvaluationRunner
         }
 
         var missingSyncAgents = build.Agents
-            .Where(entry => !entry.Value.BriefingCardIds.Contains(
-                SyncCardId.Value,
-                StringComparer.Ordinal))
+            .Where(entry => !entry.Value.BriefingCardIds.Contains("sync-contract", StringComparer.Ordinal))
             .Select(entry => entry.Key)
             .ToHashSet();
-        var scriptedTurns = ApplyKnowledgeBoundary(solved.Turns, missingSyncAgents, definition);
+        var scriptedTurns = ScriptedKnowledgePlan.Apply(build, definition, solved.Turns);
         var execution = Execute(definition, scriptedTurns);
         var signature = execution.State.Status == RunStatus.Succeeded
             ? null
@@ -117,48 +113,6 @@ public static class ScriptedEvaluationRunner
             execution.State.Agents.Sum(agent => agent.MaxHealth - agent.Health),
             execution.FallbackDecisions,
             signature);
-    }
-
-    private static ImmutableArray<ScriptedTurn> ApplyKnowledgeBoundary(
-        ImmutableArray<ScriptedTurn> solvedTurns,
-        HashSet<AgentId> missingSyncAgents,
-        RunDefinition definition)
-    {
-        var blockedSyncTurn = solvedTurns
-            .Where(turn => turn.Decisions.Any(decision =>
-                missingSyncAgents.Contains(decision.AgentId)
-                && decision.ActionId.Value.StartsWith("activate:", StringComparison.Ordinal)))
-            .Select(turn => (int?)turn.Turn)
-            .FirstOrDefault();
-        var turns = solvedTurns
-            .Select(turn => turn with
-            {
-                Decisions = turn.Decisions
-                    .Select(decision => blockedSyncTurn is not null
-                        && turn.Turn > blockedSyncTurn
-                        || missingSyncAgents.Contains(decision.AgentId)
-                        && decision.ActionId.Value.StartsWith("activate:", StringComparison.Ordinal)
-                            ? decision with { ActionId = new ActionId("wait") }
-                            : decision)
-                    .ToImmutableArray(),
-            })
-            .ToList();
-        var nextTurn = turns.Count == 0 ? 1 : turns[^1].Turn + 1;
-        while (nextTurn <= definition.Rules.TurnLimit)
-        {
-            turns.Add(
-                new ScriptedTurn(
-                    nextTurn,
-                    definition.Agents
-                        .OrderBy(agent => agent.AgentId.Value, StringComparer.Ordinal)
-                        .Select(agent => new ScriptedAgentDecision(
-                            agent.AgentId,
-                            new ActionId("wait")))
-                        .ToImmutableArray()));
-            nextTurn++;
-        }
-
-        return turns.ToImmutableArray();
     }
 
     private static ScriptExecution Execute(

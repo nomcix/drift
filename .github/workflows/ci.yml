@@ -42,6 +42,30 @@ jobs:
       - run: npm run test
       - run: npm run build
 
+  browser-smoke:
+    name: Scripted browser smoke
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/DirectiveDrift.Web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.202
+          cache: true
+          cache-dependency-path: "**/packages.lock.json"
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24.19.0
+          cache: npm
+          cache-dependency-path: src/DirectiveDrift.Web/package-lock.json
+      - run: dotnet restore ../../DirectiveDrift.sln --locked-mode
+      - run: dotnet build ../DirectiveDrift.Api/DirectiveDrift.Api.csproj --no-restore
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+
   api-client:
     name: OpenAPI client drift
     runs-on: ubuntu-latest

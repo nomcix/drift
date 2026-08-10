@@ -4,6 +4,8 @@ import { coldStartFixture } from "../fixtures/coldStart";
 import type { BriefingCardFixture } from "../fixtures/coldStart";
 import {
   initialDraft,
+  onboardingFailureDraft,
+  applyGuidedSyncRevision,
   knowledgeSummary,
   toBuildDocument,
   validateDraft,
@@ -20,13 +22,19 @@ function saveFixtureBuild(build: BuildDocument) {
 }
 
 export function App({ onSave = saveFixtureBuild }: { readonly onSave?: SaveBuild }) {
-  const [screen, setScreen] = useState<"workbench" | "run">("workbench");
+  const [screen, setScreen] = useState<"workbench" | "run">(
+    () => window.localStorage.getItem("directive-drift:p7-active-run") === null ? "workbench" : "run",
+  );
   const [draft, setDraft] = useState<BuildDraft>(initialDraft);
   const [savedBuild, setSavedBuild] = useState<BuildDocument | null>(null);
   const summary = useMemo(() => knowledgeSummary(draft), [draft]);
   const errors = useMemo(() => validateDraft(draft), [draft]);
 
-  if (screen === "run") return <RunScreen onReturn={() => { setScreen("workbench"); }} />;
+  if (screen === "run") return <RunScreen
+    build={savedBuild ?? toBuildDocument(draft)}
+    onReturn={() => { setScreen("workbench"); }}
+    onRevise={() => { setDraft((current) => applyGuidedSyncRevision(current)); setSavedBuild(null); setScreen("workbench"); }}
+  />;
 
   function updateAgent(agentId: string, update: (agent: AgentBuild) => AgentBuild) {
     setDraft((current) => {
@@ -113,6 +121,11 @@ export function App({ onSave = saveFixtureBuild }: { readonly onSave?: SaveBuild
               <circle cx="234" cy="142" r="19" /><circle cx="395" cy="139" r="23" />
             </svg>
           </div>
+          <aside className="onboarding-callout" aria-label="Scripted onboarding">
+            <strong>First run: expose the knowledge gap</strong>
+            <span>Load a valid generic build that omits Wren's sync contract, then diagnose and revise it.</span>
+            <button type="button" onClick={() => { setDraft(onboardingFailureDraft); setSavedBuild(null); }}>Load scripted failure</button>
+          </aside>
         </section>
 
         <section className="workbench" id="workbench" aria-labelledby="workbench-title">
@@ -182,7 +195,7 @@ export function App({ onSave = saveFixtureBuild }: { readonly onSave?: SaveBuild
               {errors.length === 0 ? <><strong>Ready to save</strong><span>Roster and slot contract valid</span></> : <><strong>{errors.length} issue{errors.length === 1 ? "" : "s"}</strong><span>{errors[0]}</span></>}
             </div>
             <button className="save-button" type="button" disabled={errors.length > 0} onClick={submitBuild}>Save build <span aria-hidden="true">→</span></button>
-            <button className="run-preview-button" type="button" onClick={() => { setScreen("run"); }}>Open map showcase</button>
+            <button className="run-preview-button" type="button" onClick={() => { setScreen("run"); }}>Execute scripted run</button>
           </footer>
           {savedBuild === null ? null : <p className="save-confirmation" role="status">Saved <strong>{savedBuild.name}</strong> as schema v{savedBuild.schemaVersion} fixture build <code>{savedBuild.buildId}</code>.</p>}
         </section>

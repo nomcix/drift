@@ -37,16 +37,12 @@ describe("P6 station map", () => {
     expect(document.activeElement?.getAttribute("aria-label")).toBe("Console Alpha: unpowered");
   });
 
-  it("keeps truth unavailable during live state, then exposes terminal replay truth", async () => {
-    const user = userEvent.setup();
+  it("keeps truth unavailable before the server reports a terminal replay", () => {
     render(<RunScreen onReturn={() => undefined} />);
 
     const truth = screen.getByRole<HTMLButtonElement>("button", { name: "Truthpost-run" });
     expect(truth.disabled).toBe(true);
-    await user.click(screen.getByRole("button", { name: "Resolve instantly" }));
-    expect(truth.disabled).toBe(false);
-    expect(screen.getByText("mission succeeded · score 910")).toBeTruthy();
-    expect(screen.getByLabelText("22 of 22 canonical events resolved")).toBeTruthy();
+    expect(screen.getByRole<HTMLButtonElement>("button", { name: "Resolve instantly" }).disabled).toBe(true);
   });
 
   it("keeps the responsive context rail operable as a labelled drawer", async () => {

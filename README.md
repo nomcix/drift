@@ -2,10 +2,10 @@
 
 Directive Drift is a browser-first strategy game about designing the command
 system for two autonomous, information-constrained agents. This repository is
-currently at Packet P4: the strict authored-content boundary, deterministic
-simulator, Cold Start solver, application ports, durable SQLite turn queue,
-scripted worker, replay API, and generated TypeScript API client are present.
-The briefing workbench and styled browser client remain deferred to Packet P5.
+currently at Packet P7: the strict authored-content boundary, deterministic
+simulator, scripted operation queue, generated API client, briefing workbench,
+semantic SVG map, complete two-run onboarding, and model-free replay are
+present. Live-provider autonomy remains deferred to Packet P8.
 
 ## Prerequisites
 
@@ -21,6 +21,7 @@ dotnet test
 npm ci --prefix src/DirectiveDrift.Web
 npm run lint --prefix src/DirectiveDrift.Web
 npm run test --prefix src/DirectiveDrift.Web
+npm run test:e2e --prefix src/DirectiveDrift.Web
 npm run build --prefix src/DirectiveDrift.Web
 docker build .
 ```

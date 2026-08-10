@@ -75,10 +75,13 @@ export type CanonicalPresentationEvent =
   | EventEnvelope<"RepairStarted" | "RepairContinued", { readonly agentId: AgentId; readonly deviceId: string; readonly roomId: string }>
   | EventEnvelope<"PowerRestored", { readonly deviceId: string }>
   | EventEnvelope<"ConsoleActivated", { readonly agentId: AgentId; readonly deviceId: string }>
+  | EventEnvelope<"ConsoleSyncFailed", Record<string, never>>
   | EventEnvelope<"ArchiveOpened", Record<string, never>>
+  | EventEnvelope<"DroneMoved", { readonly toRoomId: string }>
   | EventEnvelope<"AgentDamaged", { readonly agentId: AgentId; readonly source: string; readonly remainingHealth: number }>
   | EventEnvelope<"RecorderPickedUp", { readonly agentId: AgentId; readonly itemId: string; readonly roomId: string }>
   | EventEnvelope<"MissionSucceeded", { readonly score: number }>
+  | EventEnvelope<"MissionFailed", Record<string, never>>
   | EventEnvelope<"TurnStarted" | "TurnEnded", Record<string, never>>;
 
 export type AnimationIntent = {

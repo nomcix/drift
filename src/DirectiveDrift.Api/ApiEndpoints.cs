@@ -283,7 +283,8 @@ public static class ApiEndpoints
             definition,
             ReferenceSolver.ScriptedSeed,
             ReferenceSolver.ScriptedStream);
-        var plan = solution.Turns.ToImmutableDictionary(
+        var scriptedTurns = ScriptedKnowledgePlan.Apply(buildDocument, definition, solution.Turns);
+        var plan = scriptedTurns.ToImmutableDictionary(
             turn => turn.Turn,
             turn => turn.Decisions.ToImmutableDictionary(
                 decision => decision.AgentId,

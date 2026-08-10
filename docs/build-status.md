@@ -12,7 +12,72 @@ Last updated: 2026-08-09
 | P4 — Application, persistence, and API spine | Complete | A scripted run completes through durable HTTP turn operations; SQLite migration/WAL, ownership, idempotency, lease recovery, atomic commits, pagination, replay, OpenAPI, and generated TypeScript client gates pass. |
 | P5 — Web shell and briefing workbench | Complete | Fixture-backed mission briefing, objective chain, accepted opaque two-agent roster, four-slot loadouts, modules, overlap accounting, prediction, keyboard controls, and schema-shaped save pass 1280/1024 presentation and component gates. |
 | P6 — SVG map and presentation reducer | Complete | Semantic station SVG, trusted silhouettes, typed presentation fixtures, canonical-event reducer, ordered playback, gated lenses, accessible state, responsive context drawer, and powered/unpowered visual gates pass. |
-| P7+ | Not started | Scripted browser-to-server game, live providers, practice/certification, comparison, and launch hardening remain deferred. |
+| P7 — Scripted end-to-end game | Complete | Generated-client guest bootstrap, immutable build revisions, durable operation polling/resume, paged canonical events, guided fail/revise/succeed onboarding, replay truth/diagnostics, and Playwright smoke gates pass. |
+| P8+ | Not started | Live providers, practice/certification, comparison, and launch hardening remain deferred. |
+
+## P7 implementation status
+
+P7 connects the P5 workbench and P6 semantic map to the P4 HTTP API through
+the checked-in generated client. A guest can load the deliberately generic
+tutorial build, lock version 1, run the durable scripted operation loop, and
+observe a factual console-sync failure. The guided revision assigns Wren the
+missing sync contract as immutable build version 2; the same server-owned
+simulation then succeeds with score 1480.
+
+The browser stores only opaque run/operation IDs and the submitted build
+snapshot needed to restore presentation after refresh. On reload it polls the
+existing durable operation and never submits a replacement turn. Canonical
+events are fetched in bounded ordered pages and adapted into the P6 reducer;
+the client does not generate legal actions or resolve rules. Terminal replay
+uses the stored API replay and its local presentation queue, so replay controls
+make no decision requests. Truth remains gated until the authoritative run is
+terminal.
+
+The shared `ScriptedKnowledgePlan` is now used by both the evaluation harness
+and API run preparation. It applies the existing knowledge-boundary behavior
+to the authoritative scripted plan: an agent lacking the sync contract cannot
+perform its activation and waits through the remaining run. This keeps the
+generic “act optimally” build weak in the actual browser path as well as the
+evaluation CLI.
+
+### P7 schema, migration, and telemetry impact
+
+- No authored JSON Schema, persistence schema, migration, or telemetry
+  contract changed.
+- The HTTP/OpenAPI surface is unchanged. The existing generated client is
+  consumed directly and no generated file was hand-edited.
+- Build contract version `1` and ADR 0001's opaque exact two-agent roster are
+  unchanged. The browser submits immutable persisted build versions 1 and 2.
+- No provider credential, live call, new server, or rule implementation in
+  TypeScript was added. Playwright is a pinned development-only dependency.
+
+### P7 acceptance evidence
+
+Run on 2026-08-09:
+
+- `dotnet build --no-restore --disable-build-servers --verbosity minimal -m:1`
+  — passed with 0 warnings and 0 errors.
+- `dotnet test --no-build --no-restore --disable-build-servers --verbosity minimal -m:1`
+  — 120 passed, 0 failed, 0 skipped.
+- `npm run lint --prefix src/DirectiveDrift.Web` — passed with 0 warnings.
+- `npm run test --prefix src/DirectiveDrift.Web` — 22 passed, 0 failed.
+- `npm run build --prefix src/DirectiveDrift.Web` — passed; strict TypeScript
+  and Vite production build completed.
+- `npm run test:e2e --prefix src/DirectiveDrift.Web` — 2 Chromium smoke tests
+  passed: fail/revise/succeed/replay and refresh-during-operation resume.
+
+The designed-build API gate pins score 1330 and proves the terminal run hash
+equals the final canonical `TurnEnded` hash. The guided browser revision pins
+its authored module/loadout result at score 1480. Replay interaction is
+instrumented to prove it sends no additional turn requests.
+
+### P7 deliberate omissions
+
+- No P8 live provider, prompt assembly, token budget, provider retry, or SDK
+  adapter was implemented.
+- No P9 certification, comparison, or Emergency Burst client flow was added.
+- No API route, persistence migration, authored contract, or visual geometry
+  changed.
 
 ## P6 implementation status
 
